@@ -5,6 +5,26 @@ import Foundation
 import PostgreSQL
 import FluentPostgreSQL
 
+/// How to merge two users
+
+/// Slack
+/// GitHub
+/// Internal Reference --- how to merge back to internal user
+
+//
+/*
+ coin has reference to target id, from: to:
+*/
+//
+
+struct User {
+    var id: String?
+
+    var slackId: String?
+    var githubId: String?
+}
+///
+
 struct Penny {
     func give(coins: Int = 1, to: String, from: String, usingSource: String) {
 
@@ -12,10 +32,14 @@ struct Penny {
 }
 
 struct InternalUser {
-    let id: String
+    var id: String?
 }
 
 struct SlackUser {
+
+}
+
+struct GitHubUser {
 
 }
 
@@ -24,9 +48,51 @@ struct ExternalUser {
     let internalUserId: String
 }
 
+struct __Coin {
+    var id: UUID?
+
+    /// ie: GitHub, Slack, other future sources
+    var source: String
+    /// ie: who should receive the coin
+    /// the id here will correspond to the source
+    var receiver: String
+    /// ie: who gave the coin
+    /// the id here will correspond to the source, for example, if source is GitHub, it
+    /// will be a GitHub identifier
+    var giver: String
+
+    /// An indication of the reason to possibly begin categorizing more
+    var reason: String?
+
+    /// The value of a given coin, for potentially allowing more coins in future
+    var value: Int = 1
+}
+
 final class Coin: Codable {
     var id: UUID?
-    init() {
+
+    /// ie: GitHub, Slack, other future sources
+    var source: String
+    /// ie: who should receive the coin
+    /// the id here will correspond to the source
+    var to: String
+    /// ie: who gave the coin
+    /// the id here will correspond to the source, for example, if source is GitHub, it
+    /// will be a GitHub identifier
+    var from: String
+
+    /// An indication of the reason to possibly begin categorizing more
+    var reason: String?
+
+    /// The value of a given coin, for potentially allowing more coins in future
+    var value: Int = 1
+
+    init(source: String, to: String, from: String, reason: String?, value: Int) {
+        self.source = source
+        self.to = to
+        self.from = from
+        self.reason = reason
+        self.value = value
     }
 }
 

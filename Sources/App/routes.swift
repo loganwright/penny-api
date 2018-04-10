@@ -12,7 +12,7 @@ public func routes(_ router: Router) throws {
 
 
     router.get("create") { (req: Request) -> Future<Coin> in
-        let coin = Coin()
+        let coin = Coin(source: "github", to: UUID().uuidString, from: UUID().uuidString, reason: "cuz", value: 1)
         return coin.save(on: req)
     }
 
