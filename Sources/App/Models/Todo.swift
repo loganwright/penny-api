@@ -71,24 +71,8 @@ struct Penny {
     }
 
     func coins(with req: Request, for user: User) throws -> Future<[Coin]> {
-        var items = [QueryFilterItem<PostgreSQLDatabase>]()
-        if let github = user.github {
-            let source = try QueryFilterItem<PostgreSQLDatabase>.single(QueryFilter.init(field: QueryField.init(name: "source"), type: QueryFilterType.equals, value: QueryFilterValue.data(Source.github)))
-            let id = try QueryFilterItem<PostgreSQLDatabase>.single(QueryFilter.init(field: QueryField.init(name: "to"), type: QueryFilterType.equals, value: QueryFilterValue.data(github)))
-
-            let grouped = QueryFilterItem<PostgreSQLDatabase>.group(.and, [source, id])
-            items.append(grouped)
-        }
-
-        if let slack = user.slack {
-            let source = try QueryFilterItem<PostgreSQLDatabase>.single(QueryFilter.init(field: QueryField.init(name: "source"), type: QueryFilterType.equals, value: QueryFilterValue.data(Source.slack)))
-            let id = try QueryFilterItem<PostgreSQLDatabase>.single(QueryFilter.init(field: QueryField.init(name: "to"), type: QueryFilterType.equals, value: QueryFilterValue.data(slack)))
-
-            let grouped = QueryFilterItem<PostgreSQLDatabase>.group(.and, [source, id])
-            items.append(grouped)
-        }
-
-        let or = QueryFilterItem<PostgreSQLDatabase>.group(.or, items)
+        let items = try user.sources.map(Coin.sourceFilter)
+        let or = QueryFilterItem.group(.or, items)
 
         let query = Coin.query(on: req)
         query.addFilter(or)
@@ -100,21 +84,24 @@ struct Penny {
     }
 }
 
-struct InternalUser {
-    var id: String?
-}
+extension Coin {
+    static func sourceFilter(source: String, id: String) throws -> QueryFilterItem<PostgreSQLDatabase> {
+        let sourceFilter = try QueryFilter<PostgreSQLDatabase>(
+            field: "source",
+            type: .equals,
+            value: .data(source)
+        )
 
-struct SlackUser {
+        let idFilter = try QueryFilter<PostgreSQLDatabase>(
+            field: "to",
+            type: .equals,
+            value: .data(id)
+        )
 
-}
-
-struct GitHubUser {
-
-}
-
-struct ExternalUser {
-    let source: String
-    let internalUserId: String
+        let source = QueryFilterItem.single(sourceFilter)
+        let id = QueryFilterItem.single(idFilter)
+        return .group(.and, [source, id])
+    }
 }
 
 final class Coin: Codable {
