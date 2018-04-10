@@ -23,27 +23,126 @@ import FluentPostgreSQL
 */
 //
 
-struct Source {
-    static let slack = "slack"
-    static let github = "github"
-}
+//struct Source {
+//    static let slack = "slack"
+//    static let github = "github"
+//}
 
-struct User {
+//enum Sources: String, CodingKey {
+//    case slack, github
+//    static var all: [Sources] {
+//        return [
+//            .slack,
+//            .github,
+//        ]
+//    }
+//}
+
+//final class _User: Codable {
+//    var id: UUID?
+//    var sources: [String: String] = [:]
+//
+//    init(id: UUID?, sources: [String: String]) {
+//
+//    }
+//}
+//
+//extension _User {
+//    convenience init(from decoder: Decoder) throws {
+//        enum Id: String, CodingKey {
+//            case id
+//        }
+//        let idValues = try decoder.container(keyedBy: Id.self)
+//        id = try idValues.decode(UUID.self, forKey: .id)
+//
+//        let values = try decoder.container(keyedBy: Sources.self)
+//        try Sources.all.forEach { source in
+//            sources[source.stringValue] = try values.decode(String.self, forKey: source)
+//        }
+//
+////        let values = try decoder.container(keyedBy: CodingKeys.self)
+////        id = try values.decode(String.self, forKey: .id)
+////        type = try values.decode(String.self, forKey: .type)
+////        number = try values.decode(Int.self, forKey: .number)
+////        name = try values.decode(String.self, forKey: .name)
+////
+////        /* Assign Description from an inner nested container, Ex: medium description */
+////        let nestedDescription = try values.nestedContainer(keyedBy: DescriptionCodingKeys.self, forKey: .description)
+////        description = try nestedDescription.decode(String.self, forKey: .medium)
+////
+////        country = try values.decode(String.self, forKey: .country)
+////        locale = try values.decode(String.self, forKey: .locale)
+////        orderPrecedence = try values.decode(Int.self, forKey: .orderPrecedence)
+////
+////        let dateString = try values.decode(String.self, forKey: .modified)
+////        let formatter = ISO8601DateFormatter()
+////        formatter.formatOptions = [.withColonSeparatorInTime, .withDashSeparatorInDate, .withFullDate, .withTime]
+////        modified = formatter.date(from: dateString)
+//    }
+//}
+//
+////Custom Encoder - Omits modified date since that is a backend value
+//extension _User {
+//    func encode(to encoder: Encoder) throws {
+////        var container = encoder.container(keyedBy: CodingKeys.self)
+////        try container.encode(id, forKey: .id)
+////        try container.encode(type, forKey: .type)
+////        try container.encode(number, forKey: .number)
+////        try container.encode(name, forKey: .name)
+////
+////        var descriptionContainer = container.nestedContainer(keyedBy: DescriptionCodingKeys.self, forKey: .description)
+////        try descriptionContainer.encode(description, forKey: .medium)
+////
+////        try container.encode(country, forKey: .country)
+////        try container.encode(locale, forKey: .locale)
+////        try container.encode(orderPrecedence, forKey: .orderPrecedence)
+//    }
+//}
+
+final class User: Codable {
+    struct Sauce {
+        static var slack: String { return CodingKeys.slack.description }
+        static var github: String { return CodingKeys.github.description }
+    }
+
+    var id: UUID?
+
     var slack: String?
     var github: String?
     // potentially more in future
 
+    init(slack: String?, github: String?) {
+        self.slack = slack
+        self.github = github
+    }
+
     var sources: [(source: String, id: String)] {
         var list = [(source: String, id: String)]()
         if let slack = slack {
-            list.append((Source.slack, slack))
+            list.append((Sauce.slack, slack))
         }
         if let github = github {
-            list.append((Source.github, github))
+            list.append((Sauce.github, github))
         }
         return list
     }
 }
+
+extension User {
+    convenience init(_ dict: [String: String]) {
+        self.init(
+            slack: dict[Sauce.slack],
+            github: dict[Sauce.github]
+        )
+    }
+}
+
+extension User: PostgreSQLUUIDModel {}
+extension User: Content {}
+extension User: Migration {}
+extension User: Parameter {}
+
+
 ///
 
 ///
@@ -54,12 +153,12 @@ struct User {
 
 struct Penny {
     func createGitHub(with req: Request) -> Future<Coin> {
-        let coin = Coin(source: Source.github, to: "foo-gh", from: "bar", reason: "cuz", value: 1)
+        let coin = Coin(source: User.Sauce.github, to: "foo-gh", from: "bar", reason: "cuz", value: 1)
         return coin.save(on: req)
     }
 
     func createSlack(with req: Request) -> Future<Coin> {
-        let coin = Coin(source: Source.slack, to: "foo-sl", from: "bar", reason: "cuz", value: 1)
+        let coin = Coin(source: User.Sauce.slack, to: "foo-sl", from: "bar", reason: "cuz", value: 1)
         return coin.save(on: req)
     }
 
@@ -81,6 +180,54 @@ struct Penny {
 
     func give(coins: Int = 1, to: String, from: String, usingSource: String) {
 
+    }
+
+    func linkSources(sourceOne: String, idOne: String, sourceTwo: String, idTwo: String) {
+
+    }
+}
+
+extension Penny {
+    func findOrCreateUser(with req: Request, forSource source: String, withId id: String) throws -> Future<User> {
+        return try findUser(with: req, forSource: source, withId: id).flatMap(to: User.self) { (user) -> Future<User> in
+            if let user = user { return Future.map(on: req) { user } }
+            else {
+                // TODO: Get self out
+                return self.createUser(with: req, forSource: source, withId: id) }
+        }
+    }
+
+    func combineUsers(with req: Request, users: [User]) throws -> Future<User> {
+        var allSources: [String: String] = [:]
+        users.flatMap { $0.sources } .forEach { pair in
+            // TODO: Add preventers for things like duplicate sources w/ mismatched ids
+            // this shouldn't happen unless we somehow link, for example, two github accounts
+            // with a single slack account.
+            // checks should be elsewhere also
+            allSources[pair.source] = pair.id
+        }
+
+        return users.map { $0.delete(on: req) }
+            .flatten(on: req)
+            .flatMap(to: User.self) { return User(allSources).save(on: req) }
+    }
+
+    private func findUser(with req: Request, forSource source: String, withId id: String) throws -> Future<User?> {
+        let filter = try QueryFilter<PostgreSQLDatabase>(
+            field: .init(name: source),
+            type: .equals,
+            value: .data(id)
+        )
+        let item = QueryFilterItem.single(filter)
+
+        let query = User.query(on: req)
+        query.addFilter(item)
+        return query.first()
+    }
+
+    private func createUser(with req: Request, forSource source: String, withId id: String) -> Future<User> {
+        let user = User([source: id])
+        return user.save(on: req)
     }
 }
 
