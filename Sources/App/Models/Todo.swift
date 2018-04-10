@@ -1,5 +1,46 @@
 //import FluentSQLite
 //import Vapor
+import Vapor
+import Foundation
+import PostgreSQL
+import FluentPostgreSQL
+
+struct Penny {
+    func give(coins: Int = 1, to: String, from: String, usingSource: String) {
+
+    }
+}
+
+struct InternalUser {
+    let id: String
+}
+
+struct SlackUser {
+
+}
+
+struct ExternalUser {
+    let source: String
+    let internalUserId: String
+}
+
+final class Coin: Codable {
+    var id: UUID?
+    init() {
+    }
+}
+
+extension Coin: PostgreSQLUUIDModel {}
+extension Coin: Content {}
+extension Coin: Migration {}
+extension Coin: Parameter {}
+
+
+//final class CoinGift {
+//    let source: String
+//    let target: User
+//}
+
 //
 ///// A single entry of a Todo list.
 //final class Todo: SQLiteModel {

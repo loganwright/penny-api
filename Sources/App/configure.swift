@@ -39,10 +39,10 @@ public func configure(
     let postgres = PostgreSQLDatabase(config: databaseConfig)
     databases.add(database: postgres, as: .psql)
     services.register(databases)
-    
+
     /// Configure migrations
     var migrations = MigrationConfig()
-//    migrations.add(model: User.self, database: .psql)
+    migrations.add(model: Coin.self, database: .psql)
     services.register(migrations)
 
     var commandConfig = CommandConfig.default()
