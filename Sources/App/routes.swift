@@ -11,13 +11,30 @@ public func routes(_ router: Router) throws {
     }
 
 
-    router.get("create") { (req: Request) -> Future<Coin> in
-        let coin = Coin(source: "github", to: UUID().uuidString, from: UUID().uuidString, reason: "cuz", value: 1)
-        return coin.save(on: req)
+    router.get("create-gh") { (req: Request) -> Future<Coin> in
+        return Penny().createGitHub(with: req)
     }
 
-    router.get("list") { req -> Future<[Coin]> in
+    router.get("create-sl") { (req: Request) -> Future<Coin> in
+        return Penny().createSlack(with: req)
+    }
+
+    router.get("list") { req in
         return Coin.query(on: req).all()
+    }
+    router.get("list-both") { req -> Future<[Coin]> in
+        let user = User.init(slack: "foo-sl", github: "foo-gh")
+        return try Penny().coins(with: req, for: user)
+    }
+
+    router.get("list-gh") { req -> Future<[Coin]> in
+        let user = User.init(slack: nil, github: "foo-gh")
+        return try Penny().coins(with: req, for: user)
+    }
+
+    router.get("list-sl") { req -> Future<[Coin]> in
+        let user = User.init(slack: "foo-sl", github: nil)
+        return try Penny().coins(with: req, for: user)
     }
 
 

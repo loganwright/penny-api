@@ -5,6 +5,12 @@ import Foundation
 import PostgreSQL
 import FluentPostgreSQL
 
+/*
+ Start Postgres
+ docker run --name postgres -e POSTGRES_DB=vapor   -e POSTGRES_USER=vapor -e POSTGRES_PASSWORD=password   -p 5432:5432 -d postgres
+ */
+
+
 /// How to merge two users
 
 /// Slack
@@ -17,15 +23,78 @@ import FluentPostgreSQL
 */
 //
 
-struct User {
-    var id: String?
+struct Source {
+    static let slack = "slack"
+    static let github = "github"
+}
 
-    var slackId: String?
-    var githubId: String?
+struct User {
+    var slack: String?
+    var github: String?
+    // potentially more in future
+
+    var sources: [(source: String, id: String)] {
+        var list = [(source: String, id: String)]()
+        if let slack = slack {
+            list.append((Source.slack, slack))
+        }
+        if let github = github {
+            list.append((Source.github, github))
+        }
+        return list
+    }
 }
 ///
 
+///
+/*
+ Get all coins for
+ */
+///
+
 struct Penny {
+    func createGitHub(with req: Request) -> Future<Coin> {
+        let coin = Coin(source: Source.github, to: "foo-gh", from: "bar", reason: "cuz", value: 1)
+        return coin.save(on: req)
+    }
+
+    func createSlack(with req: Request) -> Future<Coin> {
+        let coin = Coin(source: Source.slack, to: "foo-sl", from: "bar", reason: "cuz", value: 1)
+        return coin.save(on: req)
+    }
+
+    func coins(with req: Request, for: String, usingSource source: String) throws -> Future<[Coin]> {
+        // get user
+        // WHERE \(source) == \(for)
+        let user: User! = nil
+        return try coins(with: req, for: user)
+    }
+
+    func coins(with req: Request, for user: User) throws -> Future<[Coin]> {
+        var items = [QueryFilterItem<PostgreSQLDatabase>]()
+        if let github = user.github {
+            let source = try QueryFilterItem<PostgreSQLDatabase>.single(QueryFilter.init(field: QueryField.init(name: "source"), type: QueryFilterType.equals, value: QueryFilterValue.data(Source.github)))
+            let id = try QueryFilterItem<PostgreSQLDatabase>.single(QueryFilter.init(field: QueryField.init(name: "to"), type: QueryFilterType.equals, value: QueryFilterValue.data(github)))
+
+            let grouped = QueryFilterItem<PostgreSQLDatabase>.group(.and, [source, id])
+            items.append(grouped)
+        }
+
+        if let slack = user.slack {
+            let source = try QueryFilterItem<PostgreSQLDatabase>.single(QueryFilter.init(field: QueryField.init(name: "source"), type: QueryFilterType.equals, value: QueryFilterValue.data(Source.slack)))
+            let id = try QueryFilterItem<PostgreSQLDatabase>.single(QueryFilter.init(field: QueryField.init(name: "to"), type: QueryFilterType.equals, value: QueryFilterValue.data(slack)))
+
+            let grouped = QueryFilterItem<PostgreSQLDatabase>.group(.and, [source, id])
+            items.append(grouped)
+        }
+
+        let or = QueryFilterItem<PostgreSQLDatabase>.group(.or, items)
+
+        let query = Coin.query(on: req)
+        query.addFilter(or)
+        return query.all()
+    }
+
     func give(coins: Int = 1, to: String, from: String, usingSource: String) {
 
     }
@@ -46,26 +115,6 @@ struct GitHubUser {
 struct ExternalUser {
     let source: String
     let internalUserId: String
-}
-
-struct __Coin {
-    var id: UUID?
-
-    /// ie: GitHub, Slack, other future sources
-    var source: String
-    /// ie: who should receive the coin
-    /// the id here will correspond to the source
-    var receiver: String
-    /// ie: who gave the coin
-    /// the id here will correspond to the source, for example, if source is GitHub, it
-    /// will be a GitHub identifier
-    var giver: String
-
-    /// An indication of the reason to possibly begin categorizing more
-    var reason: String?
-
-    /// The value of a given coin, for potentially allowing more coins in future
-    var value: Int = 1
 }
 
 final class Coin: Codable {
