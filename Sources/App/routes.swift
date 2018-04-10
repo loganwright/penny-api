@@ -37,6 +37,8 @@ public func routes(_ router: Router) throws {
         return try Penny().coins(with: req, for: user)
     }
 
+    router.get("words", use: KeyGenerator.randomKey)
+
 
 
     // Example of configuring a controller
