@@ -1,33 +1,6 @@
 import App
 import Dispatch
 import XCTest
-
-func _postGHComment(with req: Request) throws {
-    var headers = GitHub.baseHeaders
-    // /repos/:owner/:repo/issues/:number/comments
-    let commentURL = "https://api.github.com/repos/LoganWright/penny-test-repository/issues/1/comments"
-    struct Comment: Content {
-        let body: String
-    }
-
-    let comment = Comment(body: "Hello, from the api!")
-    let client = try req.make(Client.self)
-    let send = client.post(commentURL, headers: headers, content: comment)
-
-    //    let send = client.send(.GET, to: comps.url!)
-    send.catch { error in
-        print(error)
-    }
-
-    let _ = send.map { resp -> String in
-        let url = resp.content[String.self, at: "url"]
-
-        print(resp)
-        print()
-        return "hi"
-    }
-}
-
 import Vapor
 @testable import GitHub
 
