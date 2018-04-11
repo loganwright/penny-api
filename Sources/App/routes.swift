@@ -16,9 +16,9 @@ public func routes(_ router: Router) throws {
         return .ok
     }
 
-    router.get("post-comment") { req -> HTTPStatus in
-        try postGHComment(with: req)
-        return .ok
+    router.get("post-comment", String.parameter) { req -> Future<Response> in
+        let comment = try req.parameter(String.self)
+        return try github.postComment(comment, issue: 1, username: "penny-coin-test-org", project: "test-00")
     }
 
     router.get("create-gh") { (req: Request) -> Future<Coin> in

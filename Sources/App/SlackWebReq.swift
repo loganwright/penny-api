@@ -3,7 +3,7 @@ import Foundation
 import HTTP
 import WebSocket
 
-let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
+//let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
 
 func postGHComment(with req: Request) throws {
     let headers = HTTPHeaders(
