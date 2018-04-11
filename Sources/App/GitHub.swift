@@ -18,11 +18,7 @@ struct GitHub {
 
     func postComment(_ body: String, issue: Int, username: String, project: String) throws -> Future<Response> {
         let headers = GitHub.baseHeaders
-        // /repos/:owner/:repo/issues/:number/comments
         let commentURL = "\(GitHub.baseUrl)/repos/\(username)/\(project)/issues/\(issue)/comments"
-        //"https://api.github.com/repos/LoganWright/penny-test-repository/issues/1/comments"
-        //"https://api.github.com/repos/penny-coin-test-org/test-00/issues/1/comments"
-        //"\(GitHub.baseUrl)/repos/\(username)/\(project)/issues/\(issue)/comments"
 
         struct Comment: Content {
             let body: String
