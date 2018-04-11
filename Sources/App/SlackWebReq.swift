@@ -1,6 +1,7 @@
 import Vapor
 import Foundation
 import HTTP
+import WebSocket
 
 func loadRealtimeApi(with app: Application) throws {
     let token = Environment.get("BOT_TOKEN")!
@@ -16,6 +17,8 @@ func loadRealtimeApi(with app: Application) throws {
     }
 
     let foo = send.map { resp -> String in
+        let url = resp.content[String.self, at: "url"]
+        
         print(resp)
         print()
         return "hi"

@@ -10,7 +10,11 @@ public func routes(_ router: Router) throws {
         return "\(Date())"
     }
 
-
+    router.post("gh-webhook") { req -> HTTPStatus in
+        print(req)
+        print("")
+        return .ok
+    }
     router.get("create-gh") { (req: Request) -> Future<Coin> in
         return Penny().createGitHub(with: req)
     }
