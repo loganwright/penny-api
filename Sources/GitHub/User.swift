@@ -1,0 +1,235 @@
+let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
+
+let baseUrl = "https://api.github.com"
+let baseHeaders = HTTPHeaders(
+    [
+        ("Authorization", "Bearer \(ghtoken)"),
+        ("Accept", "application/vnd.github.v3+json"),
+    ]
+)
+//let foo = [
+//    "login": "octocat",
+//    "id": 1,
+//    "avatar_url": "https://github.com/images/error/octocat_happy.gif",
+//    "gravatar_id": "",
+//    "url": "https://api.github.com/users/octocat",
+//    "html_url": "https://github.com/octocat",
+//    "followers_url": "https://api.github.com/users/octocat/followers",
+//    "following_url": "https://api.github.com/users/octocat/following{/other_user}",
+//    "gists_url": "https://api.github.com/users/octocat/gists{/gist_id}",
+//    "starred_url": "https://api.github.com/users/octocat/starred{/owner}{/repo}",
+//    "subscriptions_url": "https://api.github.com/users/octocat/subscriptions",
+//    "organizations_url": "https://api.github.com/users/octocat/orgs",
+//    "repos_url": "https://api.github.com/users/octocat/repos",
+//    "events_url": "https://api.github.com/users/octocat/events{/privacy}",
+//    "received_events_url": "https://api.github.com/users/octocat/received_events",
+//    "type": "User",
+//    "site_admin": false
+//]
+import Vapor
+
+struct User: Content {
+    let login: String
+    let id: Int
+    let avatar_url: String
+    let gravatar_id: String
+    let url: String
+    let html_url: String
+    let followers_url: String
+    let following_url: String
+    let gists_url: String
+    let starred_url: String
+    let subscriptions_url: String
+    let organizations_url: String
+    let repos_url: String
+    let events_url: String
+    let received_events_url: String
+    let type: String
+    let site_admin: Bool
+}
+
+let foo: [String: Any?] = [
+    "id": 1296269,
+    "owner": User.self,
+    "name": "Hello-World",
+    "full_name": "octocat/Hello-World",
+    "description": "This your first repo!",
+    "private": false,
+    "fork": false,
+    "url": "https://api.github.com/repos/octocat/Hello-World",
+    "html_url": "https://github.com/octocat/Hello-World",
+    "archive_url": "http://api.github.com/repos/octocat/Hello-World/{archive_format}{/ref}",
+    "assignees_url": "http://api.github.com/repos/octocat/Hello-World/assignees{/user}",
+    "blobs_url": "http://api.github.com/repos/octocat/Hello-World/git/blobs{/sha}",
+    "branches_url": "http://api.github.com/repos/octocat/Hello-World/branches{/branch}",
+    "clone_url": "https://github.com/octocat/Hello-World.git",
+    "collaborators_url": "http://api.github.com/repos/octocat/Hello-World/collaborators{/collaborator}",
+    "comments_url": "http://api.github.com/repos/octocat/Hello-World/comments{/number}",
+    "commits_url": "http://api.github.com/repos/octocat/Hello-World/commits{/sha}",
+    "compare_url": "http://api.github.com/repos/octocat/Hello-World/compare/{base}...{head}",
+    "contents_url": "http://api.github.com/repos/octocat/Hello-World/contents/{+path}",
+    "contributors_url": "http://api.github.com/repos/octocat/Hello-World/contributors",
+    "deployments_url": "http://api.github.com/repos/octocat/Hello-World/deployments",
+    "downloads_url": "http://api.github.com/repos/octocat/Hello-World/downloads",
+    "events_url": "http://api.github.com/repos/octocat/Hello-World/events",
+    "forks_url": "http://api.github.com/repos/octocat/Hello-World/forks",
+    "git_commits_url": "http://api.github.com/repos/octocat/Hello-World/git/commits{/sha}",
+    "git_refs_url": "http://api.github.com/repos/octocat/Hello-World/git/refs{/sha}",
+    "git_tags_url": "http://api.github.com/repos/octocat/Hello-World/git/tags{/sha}",
+    "git_url": "git:github.com/octocat/Hello-World.git",
+    "hooks_url": "http://api.github.com/repos/octocat/Hello-World/hooks",
+    "issue_comment_url": "http://api.github.com/repos/octocat/Hello-World/issues/comments{/number}",
+    "issue_events_url": "http://api.github.com/repos/octocat/Hello-World/issues/events{/number}",
+    "issues_url": "http://api.github.com/repos/octocat/Hello-World/issues{/number}",
+    "keys_url": "http://api.github.com/repos/octocat/Hello-World/keys{/key_id}",
+    "labels_url": "http://api.github.com/repos/octocat/Hello-World/labels{/name}",
+    "languages_url": "http://api.github.com/repos/octocat/Hello-World/languages",
+    "merges_url": "http://api.github.com/repos/octocat/Hello-World/merges",
+    "milestones_url": "http://api.github.com/repos/octocat/Hello-World/milestones{/number}",
+    "mirror_url": "git:git.example.com/octocat/Hello-World",
+    "notifications_url": "http://api.github.com/repos/octocat/Hello-World/notifications{?since,all,participating}",
+    "pulls_url": "http://api.github.com/repos/octocat/Hello-World/pulls{/number}",
+    "releases_url": "http://api.github.com/repos/octocat/Hello-World/releases{/id}",
+    "ssh_url": "git@github.com:octocat/Hello-World.git",
+    "stargazers_url": "http://api.github.com/repos/octocat/Hello-World/stargazers",
+    "statuses_url": "http://api.github.com/repos/octocat/Hello-World/statuses/{sha}",
+    "subscribers_url": "http://api.github.com/repos/octocat/Hello-World/subscribers",
+    "subscription_url": "http://api.github.com/repos/octocat/Hello-World/subscription",
+    "svn_url": "https://svn.github.com/octocat/Hello-World",
+    "tags_url": "http://api.github.com/repos/octocat/Hello-World/tags",
+    "teams_url": "http://api.github.com/repos/octocat/Hello-World/teams",
+    "trees_url": "http://api.github.com/repos/octocat/Hello-World/git/trees{/sha}",
+    "homepage": "https://github.com",
+    "language": nil,
+    "forks_count": 9,
+    "stargazers_count": 80,
+    "watchers_count": 80,
+    "size": 108,
+    "default_branch": "master",
+    "open_issues_count": 0,
+    "topics": [
+    "octocat",
+    "atom",
+    "electron",
+    "API"
+    ],
+    "has_issues": true,
+    "has_wiki": true,
+    "has_pages": false,
+    "has_downloads": true,
+    "archived": false,
+    "pushed_at": "2011-01-26T19:06:43Z",
+    "created_at": "2011-01-26T19:01:12Z",
+    "updated_at": "2011-01-26T19:14:43Z",
+    "permissions": [
+        "admin": false,
+        "push": false,
+        "pull": true
+    ],
+    "allow_rebase_merge": true,
+    "allow_squash_merge": true,
+    "allow_merge_commit": true,
+    "subscribers_count": 42,
+    "network_count": 0,
+    "license": [
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "html_url": "http://choosealicense.com/licenses/mit/"
+    ]
+]
+
+struct Repo: Content {
+    let id: Int
+    let owner: User
+    let name: String
+    let full_name: String
+    let description: String?
+    let `private`: Bool
+    let fork: Bool
+    let url: String
+    let html_url: String
+    let archive_url: String
+    let assignees_url: String
+    let blobs_url: String
+    let branches_url: String
+    let clone_url: String
+    let collaborators_url: String
+    let comments_url: String
+    let commits_url: String
+    let compare_url: String
+    let contents_url: String
+    let contributors_url: String
+    let deployments_url: String
+    let downloads_url: String
+    let events_url: String
+    let forks_url: String
+    let git_commits_url: String
+    let git_refs_url: String
+    let git_tags_url: String
+    let git_url: String
+    let hooks_url: String
+    let issue_comment_url: String
+    let issue_events_url: String
+    let issues_url: String
+    let keys_url: String
+    let labels_url: String
+    let languages_url: String
+    let merges_url: String
+    let milestones_url: String
+    let mirror_url: String?
+    let notifications_url: String
+    let pulls_url: String
+    let releases_url: String
+    let ssh_url: String
+    let stargazers_url: String
+    let statuses_url: String
+    let subscribers_url: String
+    let subscription_url: String
+    let svn_url: String
+    let tags_url: String
+    let teams_url: String
+    let trees_url: String
+    let homepage: String?
+    let language: String?
+    let forks_count: Int
+    let stargazers_count: Int
+    let watchers_count: Int
+    let size: Int
+    let default_branch: String
+    let open_issues_count: Int
+    let topics: [String]?
+    let has_issues: Bool
+    let has_projects: Bool
+    let has_wiki: Bool
+    let has_pages: Bool
+    let has_downloads: Bool
+    let archived: Bool
+    // TODO: Optional?
+    let pushed_at: String?// ": "2011-01-26T19:06:43Z",
+    let created_at: String
+    let updated_at: String
+
+    let permissions: [String: Bool]
+//    ": [
+//    "admin": false,
+//    "push": false,
+//    "pull": true
+//    ],
+
+    let allow_rebase_merge: Bool?
+    let allow_squash_merge: Bool?
+    let allow_merge_commit: Bool?
+    let subscribers_count: Int?
+    let network_count: Int?
+
+    let license: [String: String]?
+//    ": [
+//    "key": "mit",
+//    "name": "MIT License",
+//    "spdx_id": "MIT",
+//    "url": "https://api.github.com/licenses/mit",
+//    "html_url": "http://choosealicense.com/licenses/mit/"
+//    ]
+}

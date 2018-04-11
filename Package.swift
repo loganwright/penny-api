@@ -9,9 +9,11 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent-postgresql.git", from: "1.0.0-rc"),
     ],
     targets: [
-        .target(name: "App", dependencies: ["FluentPostgreSQL", "Vapor"]),
+        .target(name: "App", dependencies: ["FluentPostgreSQL", "Vapor", "GitHub"]),
+        .target(name: "GitHub", dependencies: ["FluentPostgreSQL", "Vapor"]),
         .target(name: "Run", dependencies: ["App"]),
-        .testTarget(name: "AppTests", dependencies: ["App"])
+        .testTarget(name: "AppTests", dependencies: ["App"]),
+        .testTarget(name: "GitHubTests", dependencies: ["GitHub"]),
     ]
 )
 
