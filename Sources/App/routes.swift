@@ -15,6 +15,12 @@ public func routes(_ router: Router) throws {
         print("")
         return .ok
     }
+
+    router.get("post-comment") { req -> HTTPStatus in
+        try postGHComment(with: req)
+        return .ok
+    }
+
     router.get("create-gh") { (req: Request) -> Future<Coin> in
         return Penny().createGitHub(with: req)
     }

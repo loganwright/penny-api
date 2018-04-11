@@ -3,6 +3,40 @@ import Foundation
 import HTTP
 import WebSocket
 
+let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
+
+func postGHComment(with req: Request) throws {
+    let headers = HTTPHeaders(
+        [
+            ("Authorization", "Bearer \(ghtoken)"),
+            ("Accept", "application/vnd.github.v3+json"),
+        ]
+    )
+
+    // /repos/:owner/:repo/issues/:number/comments
+    let commentURL = "https://api.github.com/repos/LoganWright/penny-test-repository/issues/1/comments"
+    struct Comment: Content {
+        let body: String
+    }
+
+    let comment = Comment(body: "Hello, from the api!")
+    let client = try req.make(Client.self)
+    let send = client.post(commentURL, headers: headers, content: comment)
+
+//    let send = client.send(.GET, to: comps.url!)
+    send.catch { error in
+        print(error)
+    }
+
+    let _ = send.map { resp -> String in
+        let url = resp.content[String.self, at: "url"]
+
+        print(resp)
+        print()
+        return "hi"
+    }
+}
+
 func loadRealtimeApi(with app: Application) throws {
     let token = Environment.get("BOT_TOKEN")!
     let tokenQuery = URLQueryItem(name: "token", value: token)
