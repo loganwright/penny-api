@@ -1,12 +1,4 @@
-let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
 
-let baseUrl = "https://api.github.com"
-let baseHeaders = HTTPHeaders(
-    [
-        ("Authorization", "Bearer \(ghtoken)"),
-        ("Accept", "application/vnd.github.v3+json"),
-    ]
-)
 //let foo = [
 //    "login": "octocat",
 //    "id": 1,
@@ -206,7 +198,8 @@ struct Repo: Content {
     let has_pages: Bool
     let has_downloads: Bool
     let archived: Bool
-    // TODO: Optional?
+
+//    // TODO: Optional?
     let pushed_at: String?// ": "2011-01-26T19:06:43Z",
     let created_at: String
     let updated_at: String
@@ -224,7 +217,7 @@ struct Repo: Content {
     let subscribers_count: Int?
     let network_count: Int?
 
-    let license: [String: String]?
+    let license: [String: String?]?
 //    ": [
 //    "key": "mit",
 //    "name": "MIT License",
