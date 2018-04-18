@@ -5,100 +5,6 @@ import Foundation
 import PostgreSQL
 import FluentPostgreSQL
 
-/*
- Start Postgres
- docker run --name postgres -e POSTGRES_DB=vapor   -e POSTGRES_USER=vapor -e POSTGRES_PASSWORD=password   -p 5432:5432 -d postgres
- */
-
-
-/// How to merge two users
-
-/// Slack
-/// GitHub
-/// Internal Reference --- how to merge back to internal user
-
-//
-/*
- coin has reference to target id, from: to:
-*/
-//
-
-//struct Source {
-//    static let slack = "slack"
-//    static let github = "github"
-//}
-
-//enum Sources: String, CodingKey {
-//    case slack, github
-//    static var all: [Sources] {
-//        return [
-//            .slack,
-//            .github,
-//        ]
-//    }
-//}
-
-//final class _User: Codable {
-//    var id: UUID?
-//    var sources: [String: String] = [:]
-//
-//    init(id: UUID?, sources: [String: String]) {
-//
-//    }
-//}
-//
-//extension _User {
-//    convenience init(from decoder: Decoder) throws {
-//        enum Id: String, CodingKey {
-//            case id
-//        }
-//        let idValues = try decoder.container(keyedBy: Id.self)
-//        id = try idValues.decode(UUID.self, forKey: .id)
-//
-//        let values = try decoder.container(keyedBy: Sources.self)
-//        try Sources.all.forEach { source in
-//            sources[source.stringValue] = try values.decode(String.self, forKey: source)
-//        }
-//
-////        let values = try decoder.container(keyedBy: CodingKeys.self)
-////        id = try values.decode(String.self, forKey: .id)
-////        type = try values.decode(String.self, forKey: .type)
-////        number = try values.decode(Int.self, forKey: .number)
-////        name = try values.decode(String.self, forKey: .name)
-////
-////        /* Assign Description from an inner nested container, Ex: medium description */
-////        let nestedDescription = try values.nestedContainer(keyedBy: DescriptionCodingKeys.self, forKey: .description)
-////        description = try nestedDescription.decode(String.self, forKey: .medium)
-////
-////        country = try values.decode(String.self, forKey: .country)
-////        locale = try values.decode(String.self, forKey: .locale)
-////        orderPrecedence = try values.decode(Int.self, forKey: .orderPrecedence)
-////
-////        let dateString = try values.decode(String.self, forKey: .modified)
-////        let formatter = ISO8601DateFormatter()
-////        formatter.formatOptions = [.withColonSeparatorInTime, .withDashSeparatorInDate, .withFullDate, .withTime]
-////        modified = formatter.date(from: dateString)
-//    }
-//}
-//
-////Custom Encoder - Omits modified date since that is a backend value
-//extension _User {
-//    func encode(to encoder: Encoder) throws {
-////        var container = encoder.container(keyedBy: CodingKeys.self)
-////        try container.encode(id, forKey: .id)
-////        try container.encode(type, forKey: .type)
-////        try container.encode(number, forKey: .number)
-////        try container.encode(name, forKey: .name)
-////
-////        var descriptionContainer = container.nestedContainer(keyedBy: DescriptionCodingKeys.self, forKey: .description)
-////        try descriptionContainer.encode(description, forKey: .medium)
-////
-////        try container.encode(country, forKey: .country)
-////        try container.encode(locale, forKey: .locale)
-////        try container.encode(orderPrecedence, forKey: .orderPrecedence)
-//    }
-//}
-
 final class User: Codable {
     struct Sauce {
         static var slack: String { return CodingKeys.slack.description }
@@ -255,27 +161,31 @@ final class Coin: Codable {
     var id: UUID?
 
     /// ie: GitHub, Slack, other future sources
-    var source: String
+    let source: String
     /// ie: who should receive the coin
     /// the id here will correspond to the source
-    var to: String
+    let to: String
     /// ie: who gave the coin
     /// the id here will correspond to the source, for example, if source is GitHub, it
     /// will be a GitHub identifier
-    var from: String
+    let from: String
 
     /// An indication of the reason to possibly begin categorizing more
-    var reason: String?
+    let reason: String?
 
     /// The value of a given coin, for potentially allowing more coins in future
-    var value: Int = 1
+    let value: Int
 
-    init(source: String, to: String, from: String, reason: String?, value: Int) {
+    /// Date created
+    let createdAt: Date
+
+    init(source: String, to: String, from: String, reason: String?, value: Int = 1, createdAt: Date? = nil) {
         self.source = source
         self.to = to
         self.from = from
         self.reason = reason
         self.value = value
+        self.createdAt = createdAt ?? Date()
     }
 }
 

@@ -7,6 +7,10 @@ final class AppTests: XCTestCase {
         XCTAssert(true)
     }
 
+    func testSaveCoin() throws {
+
+    }
+    
     static let allTests = [
         ("testNothing", testNothing)
     ]
