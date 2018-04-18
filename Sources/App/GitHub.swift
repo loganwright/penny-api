@@ -2,6 +2,7 @@ import Vapor
 import Foundation
 import HTTP
 import WebSocket
+import GitHub
 
 let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
 
@@ -14,7 +15,11 @@ struct GitHub {
         ]
     )
 
-    let app: Application
+    let worker: Container
+
+    init(_ worker: Container) {
+        self.worker = worker
+    }
 
     func postComment(_ body: String, issue: Int, username: String, project: String) throws -> Future<Response> {
         let headers = GitHub.baseHeaders
@@ -25,12 +30,47 @@ struct GitHub {
         }
 
         let comment = Comment(body: body)
-        let client = try app.make(Client.self)
+        let client = try worker.make(Client.self)
         let send = client.post(commentURL, headers: headers, content: comment)
         return send.map { resp -> Response in
 //            let url = resp.content[String.self, at: "url"]
             print(resp)
             print()
+            return resp
+        }
+    }
+
+    func postIssueComment(_ body: String, fullRepoName: String, issue: Int) throws -> Future<Response> {
+        let headers = GitHub.baseHeaders
+        let commentURL = "\(GitHub.baseUrl)/repos/\(fullRepoName)/issues/\(issue)/comments"
+
+        struct Comment: Content {
+            let body: String
+        }
+
+        let comment = Comment(body: body)
+        let client = try worker.make(Client.self)
+        let send = client.post(commentURL, headers: headers, content: comment)
+        return send.map { resp -> Response in
+            //            let url = resp.content[String.self, at: "url"]
+            print(resp)
+            print()
+            return resp
+        }
+    }
+
+    func postComment(to pullRequest: PullRequest, _ body: String) throws -> Future<Response> {
+        let commentsUrl = pullRequest.review_comments_url
+        let headers = GitHub.baseHeaders
+
+        struct Comment: Content {
+            let body: String
+        }
+
+        let comment = Comment(body: body)
+        let client = try worker.make(Client.self)
+        let send = client.post(commentsUrl, headers: headers, content: comment)
+        return send.map { resp -> Response in
             return resp
         }
     }

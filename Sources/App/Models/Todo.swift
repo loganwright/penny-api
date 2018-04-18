@@ -5,12 +5,12 @@ import Foundation
 import PostgreSQL
 import FluentPostgreSQL
 
-final class User: Codable {
-    struct Sauce {
-        static var slack: String { return CodingKeys.slack.description }
-        static var github: String { return CodingKeys.github.description }
-    }
+struct Sauce {
+    static let slack = "slack"
+    static let github = "github"
+}
 
+final class User: Codable {
     var id: UUID?
 
     var slack: String?
@@ -59,12 +59,12 @@ extension User: Parameter {}
 
 struct Penny {
     func createGitHub(with req: Request) -> Future<Coin> {
-        let coin = Coin(source: User.Sauce.github, to: "foo-gh", from: "bar", reason: "cuz", value: 1)
+        let coin = Coin(source: Sauce.github, to: "foo-gh", from: "bar", reason: "cuz", value: 1)
         return coin.save(on: req)
     }
 
     func createSlack(with req: Request) -> Future<Coin> {
-        let coin = Coin(source: User.Sauce.slack, to: "foo-sl", from: "bar", reason: "cuz", value: 1)
+        let coin = Coin(source: Sauce.slack, to: "foo-sl", from: "bar", reason: "cuz", value: 1)
         return coin.save(on: req)
     }
 

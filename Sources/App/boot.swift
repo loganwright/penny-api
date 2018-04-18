@@ -6,7 +6,7 @@ var github: GitHub!
 ///
 /// [Learn More →](https://docs.vapor.codes/3.0/getting-started/structure/#bootswift)
 public func boot(_ app: Application) throws {
-    github = GitHub(app: app)
+    github = GitHub(app)
     // your code here
 //    try loadRealtimeApi(with: app)
 }
