@@ -1,6 +1,7 @@
 import Routing
 import Vapor
 import GitHub
+import Penny
 
 struct GHWebHookResponse: Content {
     var action: String
@@ -11,6 +12,16 @@ struct GHWebHookResponse: Content {
     var repository: Repo?
     var pull_request: PullRequest?
 }
+
+extension GitHub.User: ExternalUser {
+    public var externalId: String { return id.description }
+    public var source: String { return "github" }
+}
+
+//extension GitHub.User: ExternalUser {
+//    var externalId: String { return id.description }
+//    var source: String { return "github" }
+//}
 
 //extension String: Error {}
 
@@ -31,12 +42,30 @@ public func routes(_ router: Router) throws {
         return try req.content.decode(GHWebHookResponse.self).flatMap(to: HTTPStatus.self) { webhook in
             guard let pr = webhook.pull_request else { throw "expected pull request" }
             guard let repo = webhook.repository else { throw "expected repository" }
-            guard webhook.action == "closed" else { return Future.map(on: req) { .ok } }
+            guard webhook.action == "closed", pr.merged == true else { return Future.map(on: req) { .ok } }
 
             let repoName = repo.full_name
             let number = pr.number
-            return try AAGitHub(req).postIssueComment("Hey, you just merged a pull request!", fullRepoName: repoName, issue: number).flatMap(to: HTTPStatus.self) { resp in
-                return Future.map(on: req) { resp.http.status }
+
+            let to = pr.user.externalId
+            // TODO: Should these be from the merger? Could also be from Penny's GitHub id?
+            let from = "penny"
+            let reason = "merged pullrequest – @\(repo.full_name)#\(pr.number)"
+            let bot = Penny.Bot(req)
+            return bot.coins.give(to: to, from: from, source: "github", reason: reason).flatMap(to: HTTPStatus.self) { coin in
+                return try bot.user.findOrCreate(pr.user).flatMap(to: HTTPStatus.self) { user in
+                    return try bot.coins.all(for: user).flatMap(to: HTTPStatus.self) { coins in
+                        let value = coins.compactMap { $0.value } .reduce(0, +)
+
+
+                        var comment = "Hey @\(pr.user.login), you just merged a pull request, here's a coin!"
+                        comment += "\n\n"
+                        comment += "You now have \(value) coins."
+                        return try AAGitHub(req).postIssueComment(comment, fullRepoName: repoName, issue: number).flatMap(to: HTTPStatus.self) { resp in
+                            return Future.map(on: req) { resp.http.status }
+                        }
+                    }
+                }
             }
         }
 
