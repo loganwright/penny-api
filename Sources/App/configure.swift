@@ -1,5 +1,6 @@
 import Vapor
 import FluentPostgreSQL
+import Penny
 
 /// Called before your application initializes.
 ///
@@ -44,6 +45,7 @@ public func configure(
     var migrations = MigrationConfig()
     migrations.add(model: Coin.self, database: .psql)
     migrations.add(model: PennyUser.self, database: .psql)
+    migrations.add(model: Penny.User.self, database: .psql)
     services.register(migrations)
 
     var commandConfig = CommandConfig.default()

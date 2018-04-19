@@ -139,86 +139,86 @@ extension PennyAPI {
 
 }
 
-struct Penny {
-
-    let worker: Container & DatabaseConnectable
-
-    init(_ worker: Container & DatabaseConnectable) {
-        self.worker = worker
-    }
-
-    func coins(for user: ExternalUser) {
-
-    }
-
-    func coins(with req: Request, for: String, usingSource source: String) throws -> Future<[Coin]> {
-        // get user
-        // WHERE \(source) == \(for)
-        let user: PennyUser! = nil
-        return try coins(with: req, for: user)
-    }
-
-    func coins(with req: Request, for user: PennyUser) throws -> Future<[Coin]> {
-        let items = try user.sources.map(Coin.sourceFilter)
-        let or = QueryFilterItem.group(.or, items)
-
-        let query = Coin.query(on: req)
-        query.addFilter(or)
-        return query.all()
-    }
-
-    func give(coins: Int = 1, to: String, from: String, usingSource: String) {
-
-    }
-
-    func linkSources(sourceOne: String, idOne: String, sourceTwo: String, idTwo: String) {
-
-    }
-}
-
-extension Penny {
-    func findOrCreateUser(with req: Request, forSource source: String, withId id: String) throws -> Future<PennyUser> {
-        return try findUser(with: req, forSource: source, withId: id).flatMap(to: PennyUser.self) { (user) -> Future<PennyUser> in
-            if let user = user { return Future.map(on: req) { user } }
-            else {
-                // TODO: Get self out
-                return self.createUser(with: req, forSource: source, withId: id) }
-        }
-    }
-
-    func combineUsers(with req: Request, users: [PennyUser]) throws -> Future<PennyUser> {
-        var allSources: [String: String] = [:]
-        users.flatMap { $0.sources } .forEach { pair in
-            // TODO: Add preventers for things like duplicate sources w/ mismatched ids
-            // this shouldn't happen unless we somehow link, for example, two github accounts
-            // with a single slack account.
-            // checks should be elsewhere also
-            allSources[pair.source] = pair.id
-        }
-
-        return users.map { $0.delete(on: req) }
-            .flatten(on: req)
-            .flatMap(to: PennyUser.self) { return PennyUser(allSources).save(on: req) }
-    }
-
-    private func findUser(with req: Request, forSource source: String, withId id: String) throws -> Future<PennyUser?> {
-        let filter = try QueryFilter<PostgreSQLDatabase>(
-            field: .init(name: source),
-            type: .equals,
-            value: .data(id)
-        )
-        let item = QueryFilterItem.single(filter)
-
-        let query = PennyUser.query(on: req)
-        query.addFilter(item)
-        return query.first()
-    }
-
-    private func createUser(with req: Request, forSource source: String, withId id: String) -> Future<PennyUser> {
-        let user = PennyUser([source: id])
-        return user.save(on: req)
-    }
-}
+//struct Penny {
+//
+//    let worker: Container & DatabaseConnectable
+//
+//    init(_ worker: Container & DatabaseConnectable) {
+//        self.worker = worker
+//    }
+//
+//    func coins(for user: ExternalUser) {
+//
+//    }
+//
+//    func coins(with req: Request, for: String, usingSource source: String) throws -> Future<[Coin]> {
+//        // get user
+//        // WHERE \(source) == \(for)
+//        let user: PennyUser! = nil
+//        return try coins(with: req, for: user)
+//    }
+//
+//    func coins(with req: Request, for user: PennyUser) throws -> Future<[Coin]> {
+//        let items = try user.sources.map(Coin.sourceFilter)
+//        let or = QueryFilterItem.group(.or, items)
+//
+//        let query = Coin.query(on: req)
+//        query.addFilter(or)
+//        return query.all()
+//    }
+//
+//    func give(coins: Int = 1, to: String, from: String, usingSource: String) {
+//
+//    }
+//
+//    func linkSources(sourceOne: String, idOne: String, sourceTwo: String, idTwo: String) {
+//
+//    }
+//}
+//
+//extension Penny {
+//    func findOrCreateUser(with req: Request, forSource source: String, withId id: String) throws -> Future<PennyUser> {
+//        return try findUser(with: req, forSource: source, withId: id).flatMap(to: PennyUser.self) { (user) -> Future<PennyUser> in
+//            if let user = user { return Future.map(on: req) { user } }
+//            else {
+//                // TODO: Get self out
+//                return self.createUser(with: req, forSource: source, withId: id) }
+//        }
+//    }
+//
+//    func combineUsers(with req: Request, users: [PennyUser]) throws -> Future<PennyUser> {
+//        var allSources: [String: String] = [:]
+//        users.flatMap { $0.sources } .forEach { pair in
+//            // TODO: Add preventers for things like duplicate sources w/ mismatched ids
+//            // this shouldn't happen unless we somehow link, for example, two github accounts
+//            // with a single slack account.
+//            // checks should be elsewhere also
+//            allSources[pair.source] = pair.id
+//        }
+//
+//        return users.map { $0.delete(on: req) }
+//            .flatten(on: req)
+//            .flatMap(to: PennyUser.self) { return PennyUser(allSources).save(on: req) }
+//    }
+//
+//    private func findUser(with req: Request, forSource source: String, withId id: String) throws -> Future<PennyUser?> {
+//        let filter = try QueryFilter<PostgreSQLDatabase>(
+//            field: .init(name: source),
+//            type: .equals,
+//            value: .data(id)
+//        )
+//        let item = QueryFilterItem.single(filter)
+//
+//        let query = PennyUser.query(on: req)
+//        query.addFilter(item)
+//        return query.first()
+//    }
+//
+//    private func createUser(with req: Request, forSource source: String, withId id: String) -> Future<PennyUser> {
+//        let user = PennyUser([source: id])
+//        return user.save(on: req)
+//    }
+//}
 
 extension Coin {
     static func sourceFilter(source: String, id: String) throws -> QueryFilterItem<PostgreSQLDatabase> {

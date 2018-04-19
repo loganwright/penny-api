@@ -12,7 +12,7 @@ struct GHWebHookResponse: Content {
     var pull_request: PullRequest?
 }
 
-extension String: Error {}
+//extension String: Error {}
 
 /// Register your application's routes here.
 ///
