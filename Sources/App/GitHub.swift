@@ -6,7 +6,7 @@ import GitHub
 
 let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
 
-struct GitHub {
+struct AAGitHub {
     static let baseUrl = "https://api.github.com"
     static let baseHeaders = HTTPHeaders(
         [
@@ -22,8 +22,8 @@ struct GitHub {
     }
 
     func postComment(_ body: String, issue: Int, username: String, project: String) throws -> Future<Response> {
-        let headers = GitHub.baseHeaders
-        let commentURL = "\(GitHub.baseUrl)/repos/\(username)/\(project)/issues/\(issue)/comments"
+        let headers = AAGitHub.baseHeaders
+        let commentURL = "\(AAGitHub.baseUrl)/repos/\(username)/\(project)/issues/\(issue)/comments"
 
         struct Comment: Content {
             let body: String
@@ -41,8 +41,8 @@ struct GitHub {
     }
 
     func postIssueComment(_ body: String, fullRepoName: String, issue: Int) throws -> Future<Response> {
-        let headers = GitHub.baseHeaders
-        let commentURL = "\(GitHub.baseUrl)/repos/\(fullRepoName)/issues/\(issue)/comments"
+        let headers = AAGitHub.baseHeaders
+        let commentURL = "\(AAGitHub.baseUrl)/repos/\(fullRepoName)/issues/\(issue)/comments"
 
         struct Comment: Content {
             let body: String
@@ -61,7 +61,7 @@ struct GitHub {
 
     func postComment(to pullRequest: PullRequest, _ body: String) throws -> Future<Response> {
         let commentsUrl = pullRequest.review_comments_url
-        let headers = GitHub.baseHeaders
+        let headers = AAGitHub.baseHeaders
 
         struct Comment: Content {
             let body: String
@@ -82,7 +82,7 @@ struct GitHub {
 
 
 func _postGHComment(with req: Request) throws {
-    var headers = GitHub.baseHeaders
+    var headers = AAGitHub.baseHeaders
     // /repos/:owner/:repo/issues/:number/comments
     let commentURL = "https://api.github.com/repos/LoganWright/penny-test-repository/issues/1/comments"
     struct Comment: Content {

@@ -20,3 +20,30 @@ extension Future where T == Response {
         return flatMap(to: C.self) { result in return try result.content.decode(C.self) }
     }
 }
+
+extension User {
+    static func get(with worker: Container, id: String) throws -> Future<User> {
+        // https://api.github.com/user/:id
+        let url = "\(GitHub.baseUrl)/user/\(id)"
+        return try worker.client()
+            .get(url, headers: GitHub.baseHeaders)
+            .become(User.self)
+    }
+}
+
+struct API {
+    let worker: Worker
+
+    init(_ worker: Worker) {
+        self.worker = worker
+    }
+
+    func getUser(id: Int) -> User {
+        return getUser(id: id.description)
+    }
+
+    func getUser(id: String) -> User {
+
+        fatalError()
+    }
+}

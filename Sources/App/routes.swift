@@ -35,7 +35,7 @@ public func routes(_ router: Router) throws {
 
             let repoName = repo.full_name
             let number = pr.number
-            return try GitHub(req).postIssueComment("Hey, you just merged a pull request!", fullRepoName: repoName, issue: number).flatMap(to: HTTPStatus.self) { resp in
+            return try AAGitHub(req).postIssueComment("Hey, you just merged a pull request!", fullRepoName: repoName, issue: number).flatMap(to: HTTPStatus.self) { resp in
                 return Future.map(on: req) { resp.http.status }
             }
         }
@@ -121,31 +121,31 @@ public func routes(_ router: Router) throws {
         return try github.postComment(comment, issue: 1, username: "penny-coin-test-org", project: "test-00")
     }
 
-    router.get("create-gh") { (req: Request) -> Future<Coin> in
-        return Penny().createGitHub(with: req)
-    }
-
-    router.get("create-sl") { (req: Request) -> Future<Coin> in
-        return Penny().createSlack(with: req)
-    }
-
-    router.get("list") { req in
-        return Coin.query(on: req).all()
-    }
-    router.get("list-both") { req -> Future<[Coin]> in
-        let user = User.init(slack: "foo-sl", github: "foo-gh")
-        return try Penny().coins(with: req, for: user)
-    }
-
-    router.get("list-gh") { req -> Future<[Coin]> in
-        let user = User.init(slack: nil, github: "foo-gh")
-        return try Penny().coins(with: req, for: user)
-    }
-
-    router.get("list-sl") { req -> Future<[Coin]> in
-        let user = User.init(slack: "foo-sl", github: nil)
-        return try Penny().coins(with: req, for: user)
-    }
+//    router.get("create-gh") { (req: Request) -> Future<Coin> in
+//        return Penny().createGitHub(with: req)
+//    }
+//
+//    router.get("create-sl") { (req: Request) -> Future<Coin> in
+//        return Penny().createSlack(with: req)
+//    }
+//
+//    router.get("list") { req in
+//        return Coin.query(on: req).all()
+//    }
+//    router.get("list-both") { req -> Future<[Coin]> in
+//        let user = User.init(slack: "foo-sl", github: "foo-gh")
+//        return try Penny().coins(with: req, for: user)
+//    }
+//
+//    router.get("list-gh") { req -> Future<[Coin]> in
+//        let user = User.init(slack: nil, github: "foo-gh")
+//        return try Penny().coins(with: req, for: user)
+//    }
+//
+//    router.get("list-sl") { req -> Future<[Coin]> in
+//        let user = User.init(slack: "foo-sl", github: nil)
+//        return try Penny().coins(with: req, for: user)
+//    }
 
     router.get("words", use: KeyGenerator.randomKey)
 
