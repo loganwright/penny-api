@@ -9,9 +9,6 @@ import Random
 @testable import Penny
 
 final class PennyTests: XCTestCase {
-
-    func testOther() throws {}
-    
     func testUserCrud() throws {
         // MARK: GitHub
         let ghe = MockExternalUser.randomGitHub()
@@ -84,9 +81,22 @@ final class PennyTests: XCTestCase {
         return user
     }
 
+    func testGiveCoin() throws {
+        let penny = mockPenny()
+
+        let giver = MockExternalUser.randomGitHub()
+        let receiver = MockExternalUser.randomGitHub()
+
+        let _ = try penny.coins.give(to: receiver.externalId, from: giver.externalId, source: "github", reason: "I think you're great").wait()
+
+        let user = try penny.user.findOrCreate(receiver).wait()
+        let coins = try penny.coins.all(for: user).wait()
+        XCTAssert(coins.count == 1)
+    }
+
     static let allTests = [
         ("testUserCrud", testUserCrud),
-        ("testOther", testOther),
+        ("testGiveCoin", testGiveCoin),
     ]
 }
 

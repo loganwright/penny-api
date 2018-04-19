@@ -14,13 +14,13 @@ public final class User: Codable {
         self.github = github
     }
 
-    public var sources: [(source: String, id: String)] {
-        var list = [(source: String, id: String)]()
+    public var sources: [String : String] {
+        var list = [String : String]()
         if let slack = slack {
-            list.append((Sauce.slack, slack))
+            list[Sauce.slack] = slack
         }
         if let github = github {
-            list.append((Sauce.github, github))
+            list[Sauce.github] = github
         }
         return list
     }

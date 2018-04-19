@@ -6,6 +6,7 @@ extension String: Error {}
 public struct Bot {
     // Accessors
     public let user: UserAccess
+    public let coins: CoinAccess
 
     // Worker
     let worker: Container & DatabaseConnectable
@@ -13,6 +14,7 @@ public struct Bot {
     public init(_ worker: Container & DatabaseConnectable) {
         self.worker = worker
         self.user = UserAccess(worker: worker)
+        self.coins = CoinAccess(worker: worker)
     }
 }
 
@@ -62,7 +64,7 @@ extension Bot {
         public func combine(_ users: [User]) throws -> Future<User> {
             var allSources: [String: String] = [:]
             try users.flatMap { $0.sources } .forEach { pair in
-                guard allSources[pair.source] == nil else {
+                guard allSources[pair.key] == nil else {
                     var message = "duplicate sources found."
                     message += " you're the first to find this edge case,"
                     message += " congrats 🎉"
@@ -71,7 +73,7 @@ extension Bot {
                     throw message
                 }
 
-                allSources[pair.source] = pair.id
+                allSources[pair.key] = pair.value
             }
 
             // TODO: Optimize this delete operation
