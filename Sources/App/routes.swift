@@ -3,6 +3,8 @@ import Vapor
 import GitHub
 import Penny
 
+import Crypto
+
 struct GHWebHookResponse: Content {
     var action: String
     struct Issue: Content {
@@ -18,12 +20,23 @@ extension GitHub.User: ExternalUser {
     public var source: String { return "github" }
 }
 
-//extension GitHub.User: ExternalUser {
-//    var externalId: String { return id.description }
-//    var source: String { return "github" }
-//}
+// TODO:
+//let GITHUB_SECRET = Environment.get("GITHUB_SECRET")!
+let GITHUB_SECRET = "foo-bar"
 
-//extension String: Error {}
+func validateGitHubWebHook(_ req: Request) throws {
+    guard
+        let signature = req.http.headers["X-Hub-Signature"].first,
+        let data = req.http.body.data
+        else { throw "invalid request" }
+
+    let digest = try HMAC.SHA1
+        .authenticate(data, key: GITHUB_SECRET)
+        .hexEncodedString()
+
+    let complete = "sha1=\(digest)"
+    guard complete == signature else { throw "invalid request: unauthorized" }
+}
 
 /// Register your application's routes here.
 ///
@@ -35,7 +48,21 @@ public func routes(_ router: Router) throws {
     }
 
     router.post("gh-webhook") { req -> Future<HTTPStatus> in
+        try validateGitHubWebHook(req)
+
+        guard let signature = req.http.headers["X-Hub-Signature"].first else { throw "Invalid github event" }
+        let data = req.http.body.data!
+        let digest = try HMAC.SHA1.authenticate(data, key: "foo-bar")
+        print(digest)
+        print("\nsha1=\(digest.hexEncodedString())")
+        print(signature)
+        print(req)
+        return Future.map(on: req) { .ok }
+    }
+
+    router.post("original-gh-webhook") { req -> Future<HTTPStatus> in
         guard let event = req.http.headers["X-GitHub-Event"].first else { throw "Invalid github event" }
+
         // Right now, just support PR merge.
         guard event == "pull_request" else { return Future.map(on: req) { .ok } }
 

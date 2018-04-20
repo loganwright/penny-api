@@ -4,6 +4,22 @@ import Vapor
 let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
 let baseUrl = "https://api.github.com"
 
+extension String: Error {}
+
+func validateWebHook(_ req: Request, secret: String) throws {
+    guard
+        let signature = req.http.headers["X-Hub-Signature"].first,
+        let data = req.http.body.data
+        else { throw "invalid request" }
+
+    let digest = try HMAC.SHA1
+        .authenticate(data, key: GITHUB_SECRET)
+        .hexEncodedString()
+
+    let complete = "sha1=\(digest)"
+    guard complete == signature else { throw "invalid request: unauthorized" }
+}
+
 let baseHeaders = HTTPHeaders([
     ("Authorization", "Bearer \(ghtoken)"),
     ("Accept", "application/vnd.github.v3+json"),
