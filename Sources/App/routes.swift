@@ -20,24 +20,6 @@ extension GitHub.User: ExternalUser {
     public var source: String { return "github" }
 }
 
-// TODO:
-//let GITHUB_SECRET = Environment.get("GITHUB_SECRET")!
-let GITHUB_SECRET = "foo-bar"
-
-func validateGitHubWebHook(_ req: Request) throws {
-    guard
-        let signature = req.http.headers["X-Hub-Signature"].first,
-        let data = req.http.body.data
-        else { throw "invalid request" }
-
-    let digest = try HMAC.SHA1
-        .authenticate(data, key: GITHUB_SECRET)
-        .hexEncodedString()
-
-    let complete = "sha1=\(digest)"
-    guard complete == signature else { throw "invalid request: unauthorized" }
-}
-
 /// Register your application's routes here.
 ///
 /// [Learn More →](https://docs.vapor.codes/3.0/getting-started/structure/#routesswift)
@@ -48,7 +30,7 @@ public func routes(_ router: Router) throws {
     }
 
     router.post("gh-webhook") { req -> Future<HTTPStatus> in
-        try validateGitHubWebHook(req)
+        try GitHub.validateWebHook(req)
 
         guard let signature = req.http.headers["X-Hub-Signature"].first else { throw "Invalid github event" }
         let data = req.http.body.data!
