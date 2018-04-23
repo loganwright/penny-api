@@ -30,7 +30,7 @@ public func routes(_ router: Router) throws {
     }
 
     router.post("gh-webhook") { req -> Future<HTTPStatus> in
-        try GitHub.validateWebHook(req)
+        try GitHub.validateWebHook(req, secret: "foo-bar")
 
         guard let signature = req.http.headers["X-Hub-Signature"].first else { throw "Invalid github event" }
         let data = req.http.body.data!

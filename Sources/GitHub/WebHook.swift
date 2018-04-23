@@ -3,7 +3,7 @@ import Crypto
 
 extension String: Error {}
 
-public func validateWebHook(_ req: Request) throws {
+public func validateWebHook(_ req: Request, secret: String) throws {
     guard
         let signature = req.http.headers["X-Hub-Signature"].first,
         let data = req.http.body.data
