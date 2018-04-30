@@ -31,19 +31,9 @@ public func routes(_ router: Router) throws {
 
     router.post("gh-webhook") { req -> Future<HTTPStatus> in
         try GitHub.validateWebHook(req, secret: "foo-bar")
-
-        guard let signature = req.http.headers["X-Hub-Signature"].first else { throw "Invalid github event" }
-        let data = req.http.body.data!
-        let digest = try HMAC.SHA1.authenticate(data, key: "foo-bar")
-        print(digest)
-        print("\nsha1=\(digest.hexEncodedString())")
-        print(signature)
-        print(req)
-        return Future.map(on: req) { .ok }
-    }
-
-    router.post("original-gh-webhook") { req -> Future<HTTPStatus> in
-        guard let event = req.http.headers["X-GitHub-Event"].first else { throw "Invalid github event" }
+        guard
+            let event = req.http.headers["X-GitHub-Event"].first
+            else { throw "Invalid github event" }
 
         // Right now, just support PR merge.
         guard event == "pull_request" else { return Future.map(on: req) { .ok } }
@@ -67,7 +57,7 @@ public func routes(_ router: Router) throws {
                         let value = coins.compactMap { $0.value } .reduce(0, +)
 
 
-                        var comment = "Hey @\(pr.user.login), you just merged a pull request, here's a coin!"
+                        var comment = "Hey @\(pr.user.login), you just merged a pull request, have a coin! "
                         comment += "\n\n"
                         comment += "You now have \(value) coins."
                         return try AAGitHub(req).postIssueComment(comment, fullRepoName: repoName, issue: number).flatMap(to: HTTPStatus.self) { resp in

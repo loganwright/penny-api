@@ -40,7 +40,7 @@ func postGHComment(with req: Request) throws {
 func loadRealtimeApi(with app: Application) throws {
     let token = Environment.get("BOT_TOKEN")!
     let tokenQuery = URLQueryItem(name: "token", value: token)
-    guard var url = URL(string: "https://slack.com/api/rtm.start") else { fatalError("Slack realtime URL failed") }
+    guard let url = URL(string: "https://slack.com/api/rtm.start") else { fatalError("Slack realtime URL failed") }
     var comps = URLComponents(url: url, resolvingAgainstBaseURL: false)!
     comps.queryItems = [tokenQuery]
 
@@ -50,25 +50,152 @@ func loadRealtimeApi(with app: Application) throws {
         print(error)
     }
 
-    let foo = send.map { resp -> String in
-        let url = resp.content[String.self, at: "url"]
-        
-        print(resp)
-        print()
-        return "hi"
+    let foo = send.flatMap(to: String.self) { resp -> Future<String> in
+        // MARK:
+        return try resp.content[String.self, at: "url"].flatMap(to: String.self) { (string) -> Future<String> in
+            try connect(to: string!, worker: app)
+            return Future.map(on: app) { string ?? "" }
+        }
+    }
+}
+
+import WebSocket
+
+var ws: WebSocket!
+
+func _connect(to urlString: String, worker: Container) throws {
+    let urlString = "wss://echo.websocket.org"
+    guard let url = URL(string: urlString), let host = url.host else {
+        return
     }
 
-//    let req = HTTPRequest(method: .GET, url: URL(string: "https://slack.com/api/rtm.start")!, headers: HTTPHeaders.init([:]), body: <#T##HTTPBody#>)
-//    var request = Request.init(http: <#T##HTTPRequest#>, using: <#T##Container#>)
-//    client.send(.get, to: "wordApi", content: SlackQuery(token: token))
-//    return send.flatMap(to: [WordResult].self) { response in
-//        return try [WordResult].decode(from: response, for: request)
-//        }
-//        .map(to: String.self) { words in
-//            words.map { $0.word } .joined(separator: ".") .lowercased()
-//    }
+    let path = url.path.isEmpty ? "/" : url.path
 
-//    fatalError()
+    let _ = HTTPClient.webSocket(
+        scheme: .wss,
+        hostname: host,
+        port: url.port,
+        path: path,
+        on: worker
+        ).map { _ws -> String in
+            ws = _ws
+            //            {"id":1524536803,"channel":"D1KA314QK","type":"message","text":"Echo: asdf"}
+            let asdf = SlackMessage(to: "D1KA314QK", text: "Hey there")
+            ws.send(asdf)
+
+            ws.onBinary { (ws, data) in
+                print("Binary rec'd")
+            }
+            ws.onText { ws, text in
+                print("Got: \(text)")
+                let newMessage = SlackMessage(to: "asfd", text: "Echo: \(text)")
+                ws.send(newMessage)
+            }
+
+            ws.onClose.always {
+                print("We done here")
+            }
+
+            return ""
+    }
+}
+
+func connect(to urlString: String, worker: Container) throws {
+    guard let url = URL(string: urlString), let host = url.host else {
+        return
+    }
+
+    let path = url.path.isEmpty ? "/" : url.path
+
+    let _ = HTTPClient.webSocket(
+        scheme: .wss,
+        hostname: host,
+        port: url.port,
+        path: path,
+        on: worker
+        ).map { _ws -> String in
+            ws = _ws
+//            {"id":1524536803,"channel":"D1KA314QK","type":"message","text":"Echo: asdf"}
+//            let asdf = SlackMessage(to: "D1KA314QK", text: "Hey there")
+//            ws.send("{\"id\":1524536803,\"channel\":\"D1KA314QK\",\"type\":\"message\",\"text\":\"Echo: asdf\"}")
+
+//            ws.onBinary { (ws, data) in
+//                print("Binary rec'd")
+//            }
+//            ws.onText { ws, text in
+//                let data = text.data(using: .utf8)!
+//                let packet = try! IncomingPacket.make(with: data)
+//                guard packet.type == "message" else {
+//                    print("Got unknown packet: \(text)")
+//                    return
+//                }
+//
+//                let message = try! text.parse()
+//                print("text: \(text)")
+////                let message = try! text.parse()
+//                print("got messag: \(message)")
+//
+//                let newMessage = SlackMessage(to: message.channel, text: "Echo: \(message.text)")
+//                ws.send(newMessage)
+//            }
+
+            ws.onClose.always {
+                print("We done here")
+            }
+            return "hey"
+    }
+}
+
+extension Content {
+    static func make(with data: Data) throws -> Self {
+        let decoder = JSONDecoder()
+        return try decoder.decode(Self.self, from: data)
+    }
+}
+
+struct IncomingPacket: Content {
+    let type: String
+}
+
+extension WebSocket {
+    func send(_ location: SlackMessage) {
+        let encoder = JSONEncoder()
+        guard let data = try? encoder.encode(location) else { return }
+        let string = String(decoding: data, as: UTF8.self)
+        print("Sending: \(string)")
+        send(string)
+    }
+}
+
+extension String {
+    func parse() throws -> IncomingMessage {
+        let decoder = JSONDecoder()
+        return try decoder.decode(IncomingMessage.self, from: self.data(using: .utf8) ?? Data())
+    }
+}
+
+struct IncomingMessage: Content {
+    var channel: String
+    var user: String
+    var text: String
+}
+
+import Random
+
+struct SlackMessage: Content {
+    let id: UInt32
+    let type: String
+    let channel: String
+    let text: String
+//    let ts: String?
+
+    init(to channel: String, text: String) {
+        // MARK: Make Random
+        self.id = UInt32(Date().timeIntervalSince1970)
+        self.type = "message"
+        self.channel = channel
+        self.text = text
+    }
 }
 
 struct SlackQuery: Content {
