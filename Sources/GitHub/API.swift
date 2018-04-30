@@ -26,29 +26,14 @@ extension Future where T == Response {
     }
 }
 
-extension User {
-    static func get(with worker: Container, id: String) throws -> Future<User> {
-        // https://api.github.com/user/:id
-        let url = "\(GitHub.baseUrl)/user/\(id)"
-        return try worker.client()
-            .get(url, headers: GitHub.baseHeaders)
-            .become(User.self)
-    }
-}
 
-struct API {
-    let worker: Worker
-
-    init(_ worker: Worker) {
-        self.worker = worker
+public func postComment(with worker: Container, to commentable: Commentable, _ body: String) throws -> Future<Response> {
+    struct Comment: Content {
+        let body: String
     }
 
-    func getUser(id: Int) -> User {
-        return getUser(id: id.description)
-    }
-
-    func getUser(id: String) -> User {
-
-        fatalError()
-    }
+    let commentsUrl = commentable.comments_url
+    let comment = Comment(body: body)
+    let client = try worker.make(Client.self)
+    return client.post(commentsUrl, headers: baseHeaders, content: comment)
 }

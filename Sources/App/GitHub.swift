@@ -60,7 +60,7 @@ struct AAGitHub {
     }
 
     func postComment(to pullRequest: PullRequest, _ body: String) throws -> Future<Response> {
-        let commentsUrl = pullRequest.review_comments_url
+        let commentsUrl = pullRequest.comments_url
         let headers = AAGitHub.baseHeaders
 
         struct Comment: Content {
@@ -80,9 +80,8 @@ struct AAGitHub {
     }
 }
 
-
 func _postGHComment(with req: Request) throws {
-    var headers = AAGitHub.baseHeaders
+    let headers = AAGitHub.baseHeaders
     // /repos/:owner/:repo/issues/:number/comments
     let commentURL = "https://api.github.com/repos/LoganWright/penny-test-repository/issues/1/comments"
     struct Comment: Content {

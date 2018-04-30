@@ -5,16 +5,6 @@ import Penny
 
 import Crypto
 
-struct GHWebHookResponse: Content {
-    var action: String
-    struct Issue: Content {
-        var number: Int
-    }
-    var issue: Issue?
-    var repository: Repo?
-    var pull_request: PullRequest?
-}
-
 extension GitHub.User: ExternalUser {
     public var externalId: String { return id.description }
     public var source: String { return "github" }
@@ -30,45 +20,11 @@ public func routes(_ router: Router) throws {
     }
 
     router.post("gh-webhook") { req -> Future<HTTPStatus> in
-        try GitHub.validateWebHook(req, secret: "foo-bar")
-        guard
-            let event = req.http.headers["X-GitHub-Event"].first
-            else { throw "Invalid github event" }
-
-        // Right now, just support PR merge.
-        guard event == "pull_request" else { return Future.map(on: req) { .ok } }
-
-        return try req.content.decode(GHWebHookResponse.self).flatMap(to: HTTPStatus.self) { webhook in
-            guard let pr = webhook.pull_request else { throw "expected pull request" }
-            guard let repo = webhook.repository else { throw "expected repository" }
-            guard webhook.action == "closed", pr.merged == true else { return Future.map(on: req) { .ok } }
-
-            let repoName = repo.full_name
-            let number = pr.number
-
-            let to = pr.user.externalId
-            // TODO: Should these be from the merger? Could also be from Penny's GitHub id?
-            let from = "penny"
-            let reason = "merged pullrequest – @\(repo.full_name)#\(pr.number)"
-            let bot = Penny.Bot(req)
-            return bot.coins.give(to: to, from: from, source: "github", reason: reason).flatMap(to: HTTPStatus.self) { coin in
-                return try bot.user.findOrCreate(pr.user).flatMap(to: HTTPStatus.self) { user in
-                    return try bot.coins.all(for: user).flatMap(to: HTTPStatus.self) { coins in
-                        let value = coins.compactMap { $0.value } .reduce(0, +)
-
-
-                        var comment = "Hey @\(pr.user.login), you just merged a pull request, have a coin! "
-                        comment += "\n\n"
-                        comment += "You now have \(value) coins."
-                        return try AAGitHub(req).postIssueComment(comment, fullRepoName: repoName, issue: number).flatMap(to: HTTPStatus.self) { resp in
-                            return Future.map(on: req) { resp.http.status }
-                        }
-                    }
-                }
+        print("WEBHOOK:\n\n\(req)\n\n***********")
+        return try GitHub.validateWebHook(req, secret: "foo-bar")
+            .flatMap(to: HTTPStatus.self) { webhook in
+                return try handle(webhook, on: req)
             }
-        }
-
-        return Future.map(on: req) { .ok }
     }
 
 //    router.post("gh-webhook") { req -> Future<HTTPStatus> in
@@ -186,8 +142,6 @@ public func routes(_ router: Router) throws {
 //    router.delete("todos", Todo.parameter, use: todoController.delete)
 }
 
+//        let webhook = try req.content.decode(WebHook.self)
+//        return webhook.map(to: HTTPStatus.self, GitHub.process)
 
-//func createCoin(_ req: Request) -> Future<Coin> {
-//    let coin = Coin()
-//    return coin.save(on: req)
-//}
