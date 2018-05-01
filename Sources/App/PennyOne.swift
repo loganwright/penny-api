@@ -136,15 +136,15 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
         let github = GitHub.API(worker)
         let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
         let user = try! github.user(login: login)
-        let linkRequest = user.flatMap(to: AccountLinkRequest.self) { user in
-            return AccountLinkRequest(
-                    initiationId: fromId,
-                    initiationSource: "slack",
-                    requestedId: user.externalId,
-                    requestedSource: user.externalSource
-                )
-                .save(on: worker)
-        }
+//        let linkRequest = user.flatMap(to: AccountLinkRequest.self) { user in
+//            return AccountLinkRequest(
+//                    initiationId: fromId,
+//                    initiationSource: "slack",
+//                    requestedId: user.externalId,
+//                    requestedSource: user.externalSource
+//                )
+//                .save(on: worker)
+//        }
 
         let newIssue = try! slack.getUser(id: msg.user).flatMap(to: GitHub.Issue.self) { user in
             let slackLogin = user.name
@@ -163,20 +163,35 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
             return try github.postIssue(user: "penny-coin", repo: "validation", title: "Verifying: \(login)", body: verification)
         }
 
-        linkRequest.and(newIssue).flatMap(to: Response.self) { (link, issue) in
-            print("Link: \(link)")
-            print("Issue: \(issue)")
-            let url = issue.html_url
-            let text = "Visit \(url) to connect your GitHub account."
-            return try slack.postComment(channel: msg.channel, text: text, thread_ts: msg.thread_ts ?? msg.ts)
-        }.run()
+        newIssue.and(user).map(to: Void.self) { issue, user in
+            print(user)
+            let linkRequest = AccountLinkRequest(
+                    initiationId: fromId,
+                    initiationSource: "slack",
+                    requestedId: user.externalId,
+                    requestedSource: user.externalSource,
+                    reference: issue.id.description
+                )
+                .save(on: worker)
 
-        // parse out github username
-        // create connection request in data table
-        // post github username issue
-        // wait for webhook w/ verify or not
-        // verify and link
-        // destroy connection request
+            linkRequest.flatMap(to: Response.self) { link in
+                    print("Link: \(link)")
+                    print("Issue: \(issue)")
+                    let url = issue.html_url
+                    let text = "Visit \(url) to connect your GitHub account."
+                    return try slack.postComment(channel: msg.channel, text: text, thread_ts: msg.thread_ts ?? msg.ts)
+                }.run()
+
+            return
+        }.run()
+//
+//        linkRequest.flatMap(to: Response.self) { (link, issue) in
+//            print("Link: \(link)")
+//            print("Issue: \(issue)")
+//            let url = issue.html_url
+//            let text = "Visit \(url) to connect your GitHub account."
+//            return try slack.postComment(channel: msg.channel, text: text, thread_ts: msg.thread_ts ?? msg.ts)
+//        }.run()
     }
 //    else if trimmed.hasPrefix("<@U1PF52H9C>") || trimmed.hasSuffix("<@U1PF52H9C>") {
 //        if trimmed.lowercased().contains(any: "hello", "hey", "hiya", "hi", "aloha", "sup") {

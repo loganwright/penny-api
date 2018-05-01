@@ -15,6 +15,8 @@ public struct PullRequest: Content, Commentable {
 }
 
 public struct Issue: Content, Commentable {
+    public let id: Int
+    
     public let title: String
     public let body: String?
 
@@ -23,4 +25,5 @@ public struct Issue: Content, Commentable {
     public let comments_url: String
     public let user: User
     public let html_url: String
+    public let url: String
 }

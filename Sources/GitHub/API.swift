@@ -49,6 +49,16 @@ public struct API {
     public func user(id: String) throws -> Future<User> {
         return try User.fetch(with: worker, forId: id)
     }
+
+    public func close(_ issue: Issue) throws -> Future<Issue> {
+        struct Close: Content {
+            let state: String
+        }
+        let close = Close(state: "closed")
+
+        let client = try worker.make(Client.self)
+        return client.patch(issue.url, headers: baseHeaders, content: close).become()
+    }
 }
 
 extension API {

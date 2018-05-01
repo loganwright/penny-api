@@ -44,6 +44,11 @@ extension Bot {
             return user.delete(on: worker)
         }
 
+        public func combine(_ users: [ExternalUser]) throws -> Future<User> {
+            let users = try users.map(findOrCreate).flatten(on: worker)
+            return users.flatMap(to: User.self, combine)
+        }
+
         public func combine(_ users: [User]) throws -> Future<User> {
             var allSources: [String: String] = [:]
             try users.flatMap { $0.sources } .forEach { pair in
