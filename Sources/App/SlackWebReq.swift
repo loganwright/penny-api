@@ -52,6 +52,8 @@ func loadRealtimeApi(with app: Application) throws {
 
     let foo = send.flatMap(to: String.self) { resp -> Future<String> in
         // MARK:
+        print("Realtime api resp: \n\n********\n\n\(resp)\n\n********\n\n")
+        print("")
         return try resp.content[String.self, at: "url"].flatMap(to: String.self) { (string) -> Future<String> in
             try connect(to: string!, worker: app)
             return Future.map(on: app) { string ?? "" }
@@ -113,31 +115,23 @@ func connect(to urlString: String, worker: Container) throws {
         port: url.port,
         path: path,
         on: worker
-        ).map { _ws -> String in
-            ws = _ws
-//            {"id":1524536803,"channel":"D1KA314QK","type":"message","text":"Echo: asdf"}
-//            let asdf = SlackMessage(to: "D1KA314QK", text: "Hey there")
-//            ws.send("{\"id\":1524536803,\"channel\":\"D1KA314QK\",\"type\":\"message\",\"text\":\"Echo: asdf\"}")
+        ).map { ws -> String in
+            ws.onText { ws, text in
+                let data = text.data(using: .utf8)!
+                let packet = try! IncomingPacket.make(with: data)
+                guard packet.type == "message" else {
+                    print("Got unknown packet: \(text)")
+                    return
+                }
 
-//            ws.onBinary { (ws, data) in
-//                print("Binary rec'd")
-//            }
-//            ws.onText { ws, text in
-//                let data = text.data(using: .utf8)!
-//                let packet = try! IncomingPacket.make(with: data)
-//                guard packet.type == "message" else {
-//                    print("Got unknown packet: \(text)")
-//                    return
-//                }
-//
-//                let message = try! text.parse()
-//                print("text: \(text)")
-////                let message = try! text.parse()
-//                print("got messag: \(message)")
-//
-//                let newMessage = SlackMessage(to: message.channel, text: "Echo: \(message.text)")
+                let message = try! text.parse()
+                print("text: \(text)")
+                //                let message = try! text.parse()
+                print("got messag: \(message)")
+
+                let newMessage = SlackMessage(to: message.channel, text: "Echo: \(message.text)")
 //                ws.send(newMessage)
-//            }
+            }
 
             ws.onClose.always {
                 print("We done here")

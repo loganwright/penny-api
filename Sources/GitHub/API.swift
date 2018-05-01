@@ -44,6 +44,23 @@ public struct API {
     }
 }
 
+extension API {
+    public func postIssue(user: String, repo: String, title: String, body: String?) throws -> Future<Response> {
+        let issueUrl = "\(baseUrl)/repos/\(user)/\(repo)/issues"
+
+        struct Post: Content {
+            let title: String
+            let body: String?
+            let labels: [String]?
+            let assignees: [String]?
+        }
+
+        let post = Post(title: title, body: body, labels: ["validate"], assignees: nil)
+        let client = try worker.make(Client.self)
+        return client.post(issueUrl, headers: baseHeaders, content: post)
+    }
+}
+
 public func postComment(with worker: Container, to commentable: Commentable, _ body: String) throws -> Future<Response> {
     struct Comment: Content {
         let body: String

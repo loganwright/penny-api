@@ -59,6 +59,11 @@ public func routes(_ router: Router) throws {
         return webhook.map(runner.handle)
     }
 
+    router.get("comment-test") { req -> Future<Response> in
+        let github = GitHub.API(req)
+        return try github.postIssue(user: "penny-coin", repo: "validation", title: "Hi there, testing.", body: "Also a body.")
+    }
+
     router.get("words", use: KeyGenerator.randomKey)
 }
 
