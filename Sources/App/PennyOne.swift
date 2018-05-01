@@ -126,9 +126,25 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
 //            try ws.send(response)
         }
     } else if trimmed.lowercased().contains("connect github") {
+        guard let login = trimmed.split(separator: " ").last else {
+            print("unable to parse github login")
+            return
+        }
+        
+        let request = ConnectionRequest(
+                initiationId: fromId,
+                initiationSource: "slack",
+                requestedId: "todo",
+                requestedSource: "github"
+            )
+            .save(on: worker)
+
         // parse out github username
+        // create connection request in data table
         // post github username issue
-        // create connection request in data table?
+        // wait for webhook w/ verify or not
+        // verify and link
+        // destroy connection request
     }
 //    else if trimmed.hasPrefix("<@U1PF52H9C>") || trimmed.hasSuffix("<@U1PF52H9C>") {
 //        if trimmed.lowercased().contains(any: "hello", "hey", "hiya", "hi", "aloha", "sup") {

@@ -313,6 +313,14 @@ final class ConnectionRequest: Codable {
 
     var requestedId: String
     var requestedSource: String
+
+    init(initiationId: String, initiationSource: String, requestedId: String, requestedSource: String) {
+        self.initiationId = initiationId
+        self.initiationSource = initiationSource
+        self.requestedSource = requestedId
+        self.requestedId = requestedId
+        self.created = Date()
+    }
 }
 
 extension ConnectionRequest: PostgreSQLUUIDModel {}

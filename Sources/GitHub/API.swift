@@ -42,6 +42,10 @@ public struct API {
         let client = try worker.make(Client.self)
         return client.post(commentsUrl, headers: baseHeaders, content: comment)
     }
+
+    public func user(login: String) throws -> Future<User> {
+        return try User.fetch(with: worker, forUsername: login)
+    }
 }
 
 extension API {
