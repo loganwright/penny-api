@@ -157,7 +157,7 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
             verification += "**THAT'S NOT ME!**\n"
             verification += "Comment on this issue with the word, `fraud`."
             verification += "\n\n"
-            verification += "Something Else:"
+            verification += "Something Else:\n"
             verification += "Type anything else to close this issue."
 
             return try github.postIssue(user: "penny-coin", repo: "validation", title: "Verifying: \(login)", body: verification)
