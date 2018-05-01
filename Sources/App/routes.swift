@@ -28,6 +28,33 @@ public func routes(_ router: Router) throws {
         return "Alive and well: \(Date())"
     }
 
+    router.post("gh-validation-hook") { req -> Future<HTTPStatus> in
+//        print("VALIDATIONN: \(req)")
+        struct Comment: Content {
+            let body: String
+            let user: GitHub.User
+        }
+
+        struct CommentHook: Content {
+            let action: String
+            let issue: Issue?
+            let sender: GitHub.User
+            let comment: Comment
+        }
+
+        let hook = try req.content.decode(CommentHook.self)
+        return hook.flatMap(to: HTTPStatus.self) { hook in
+            guard hook.sender.externalId == hook.comment.user.externalId else {
+                print("nope")
+                return Future.map(on: req) { .ok }
+            }
+
+            print("\(hook.sender.login) posted a comment")
+            print("verified: \(hook.comment.body.trimmedWhitespace().lowercased().contains("verify"))")
+            return Future.map(on: req) { .ok }
+        }
+    }
+
     router.get("coins") { req -> EventLoopFuture<[Coin]> in
         struct CoinQuery: Content {
             let id: String
@@ -61,9 +88,19 @@ public func routes(_ router: Router) throws {
 
     router.get("comment-test") { req -> Future<Response> in
         let github = GitHub.API(req)
-        return try github.postIssue(user: "penny-coin", repo: "validation", title: "Hi there, testing.", body: "Also a body.")
+        let login = "loganwright"
+        let slackLogin = "logan"
+        var verification = "Hey there, @\(login), "
+        verification += "\(slackLogin) from slack, wants to link this GitHub account."
+        verification += "\n\n"
+        verification += "Continue:\n"
+        verification += "Comment on this issue with the word, `verify`."
+        verification += "\n\n"
+        verification += "**THAT'S NOT ME!**"
+        verification += "Comment on this issue with the word, `fraud`."
+
+        return try github.postIssue(user: "penny-coin", repo: "validation", title: "Verifying: \(login.lowercased())", body: verification)
     }
 
     router.get("words", use: KeyGenerator.randomKey)
 }
-

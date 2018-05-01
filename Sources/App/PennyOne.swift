@@ -125,6 +125,10 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
 //                threadTs: threadTs)
 //            try ws.send(response)
         }
+    } else if trimmed.lowercased().contains("connect github") {
+        // parse out github username
+        // post github username issue
+        // create connection request in data table?
     }
 //    else if trimmed.hasPrefix("<@U1PF52H9C>") || trimmed.hasSuffix("<@U1PF52H9C>") {
 //        if trimmed.lowercased().contains(any: "hello", "hey", "hiya", "hi", "aloha", "sup") {

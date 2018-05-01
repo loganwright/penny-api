@@ -52,10 +52,10 @@ extension API {
             let title: String
             let body: String?
             let labels: [String]?
-            let assignees: [String]?
+            let assignees: [String]
         }
 
-        let post = Post(title: title, body: body, labels: ["validate"], assignees: nil)
+        let post = Post(title: title, body: body, labels: ["validate"], assignees: [])
         let client = try worker.make(Client.self)
         return client.post(issueUrl, headers: baseHeaders, content: post)
     }

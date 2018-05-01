@@ -302,3 +302,20 @@ import GitHub
 //
 ///// Allows `Todo` to be used as a dynamic parameter in route definitions.
 //extension Todo: Parameter { }
+
+final class ConnectionRequest: Codable {
+    var id: UUID?
+
+    var created: Date
+
+    var initiationId: String
+    var initiationSource: String
+
+    var requestedId: String
+    var requestedSource: String
+}
+
+extension ConnectionRequest: PostgreSQLUUIDModel {}
+extension ConnectionRequest: Content {}
+extension ConnectionRequest: Migration {}
+extension ConnectionRequest: Parameter {}
