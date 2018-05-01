@@ -54,12 +54,9 @@ public func routes(_ router: Router) throws {
     }
 
     router.post("gh-webhook") { req -> Future<HTTPStatus> in
-        return try GitHub.validateWebHook(req, secret: "foo-bar").map {webhook in
-            return try handle(webhook, on: req)
-        }
-//            .flatMap(to: HTTPStatus.self) { webhook in
-//                return try handle(webhook, on: req)
-//            }
+        let runner = WebHookRunner(req)
+        let webhook = try runner.validateWebHook(secret: "foo-bar")
+        return webhook.map(runner.handle)
     }
 
     router.get("words", use: KeyGenerator.randomKey)
