@@ -5,6 +5,45 @@ import WebSocket
 
 //let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
 
+
+struct Slack {
+    let token: String
+    let worker: Container
+
+    func postComment(channel: String, text: String, thread_ts: String?) throws -> Future<Response> {
+        struct SlackComment: Content {
+            let token: String
+            let channel: String
+            let text: String
+            let thread_ts: String?
+        }
+
+        let comment = SlackComment(token: token, channel: channel, text: text, thread_ts: thread_ts)
+        let url = "https://slack.com/api/chat.postMessage"
+        let client = try worker.make(Client.self)
+        return client.post(url, headers: HTTPHeaders.init([("Authorization", "Bearer \(token)")]), content: comment)
+//        return client.post(url, content: comment).map { resp in
+//            print("\n\nMESSAAGE RESPONSE\n\n\(resp)\n\n")
+//            return Future.map(on: self.worker) { resp }
+//        }
+    }
+
+    func postEmoji(emoji: String, channel: String, ts: String) throws -> Future<Response> {
+        struct Emoji: Content {
+            let token: String
+            let name: String
+            let channel: String
+            let timestamp: String
+        }
+
+        let emoji = Emoji(token: token, name: emoji, channel: channel, timestamp: ts)
+        let url = "https://slack.com/api/reactions.add"
+        let client = try worker.make(Client.self)
+        return client.post(url, headers: HTTPHeaders.init([("Authorization", "Bearer \(token)")]), content: emoji)
+
+    }
+}
+
 func postGHComment(with req: Request) throws {
     let headers = HTTPHeaders(
         [
@@ -37,9 +76,10 @@ func postGHComment(with req: Request) throws {
     }
 }
 
+let SLACK_BOT_TOKEN = Environment.get("BOT_TOKEN")!
+
 func loadRealtimeApi(with app: Application) throws {
-    let token = Environment.get("BOT_TOKEN")!
-    let tokenQuery = URLQueryItem(name: "token", value: token)
+    let tokenQuery = URLQueryItem(name: "token", value: SLACK_BOT_TOKEN)
     guard let url = URL(string: "https://slack.com/api/rtm.start") else { fatalError("Slack realtime URL failed") }
     var comps = URLComponents(url: url, resolvingAgainstBaseURL: false)!
     comps.queryItems = [tokenQuery]
@@ -52,7 +92,7 @@ func loadRealtimeApi(with app: Application) throws {
 
     let foo = send.flatMap(to: String.self) { resp -> Future<String> in
         // MARK:
-        print("Realtime api resp: \n\n********\n\n\(resp)\n\n********\n\n")
+//        print("Realtime api resp: \n\n********\n\n\(resp)\n\n********\n\n")
         print("")
         return try resp.content[String.self, at: "url"].flatMap(to: String.self) { (string) -> Future<String> in
             try connect(to: string!, worker: app)
@@ -119,24 +159,39 @@ func connect(to urlString: String, worker: Container) throws {
             ws.onText { ws, text in
                 let data = text.data(using: .utf8)!
                 let packet = try! IncomingPacket.make(with: data)
-                guard packet.type == "message" else {
-                    print("Got unknown packet: \(text)")
+                guard packet.type == "message", packet.subtype != "bot_message" else {
+                    if packet.type == "hello" { print("Penny slack, ONLINE.") }
                     return
                 }
-
-                let message = try! text.parse()
-                print("text: \(text)")
+//                print("MESG: \(text)")
+                guard let message = try? text.parse() else {
+                    print("Couldn't parse message: \(text)")
+                    return
+                }
                 //                let message = try! text.parse()
                 print("got messag: \(message)")
 
                 let newMessage = SlackMessage(to: message.channel, text: "Echo: \(message.text)")
-//                ws.send(newMessage)
+                let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
+                try! slack.postComment(
+                        channel: newMessage.channel,
+                        text: "Bza-- \(newMessage.text)",
+                        thread_ts: message.thread_ts ?? message.ts
+                    )
+                    .run()
+                try! slack.postEmoji(emoji: "penny-dev", channel: message.channel, ts: message.ts).run()
             }
 
             ws.onClose.always {
                 print("We done here")
             }
             return "hey"
+    }
+}
+
+extension Future {
+    func run() {
+        let _ = self.map(to: Void.self) { _ in }
     }
 }
 
@@ -149,6 +204,7 @@ extension Content {
 
 struct IncomingPacket: Content {
     let type: String
+    let subtype: String?
 }
 
 extension WebSocket {
@@ -168,10 +224,16 @@ extension String {
     }
 }
 
+/*
+ {"text":"Bza-- Echo: cool, cool cool cool","username":"bot","bot_id":"B1K3PLJ4R","type":"message","subtype":"bot_message","team":"T0N650MLL","channel":"D1KA314QK","event_ts":"1525140071.000060","ts":"1525140071.000060"}
+
+ */
 struct IncomingMessage: Content {
     var channel: String
     var user: String
     var text: String
+    var ts: String
+    var thread_ts: String?
 }
 
 import Random
