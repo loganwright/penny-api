@@ -14,6 +14,7 @@ func handle(_ webhook: WebHook, on req: Request) throws -> Future<HTTPStatus> {
     // TODO: Should these be from the merger? Could also be from Penny's GitHub id?
     let from = "penny"
     let reason = "merged pullrequest – \(repo.full_name)#\(pr.number)"
+    let source = "github"
 
     func makeMessage(total: Int) -> String {
         var comment = "Hey @\(pr.user.login), you just merged a pull request, have a coin! "
@@ -24,9 +25,8 @@ func handle(_ webhook: WebHook, on req: Request) throws -> Future<HTTPStatus> {
 
     let github = GitHub.API(req)
     let bot = Penny.Bot(req)
-    
     return bot.coins
-        .give(to: to, from: from, source: "github", reason: reason)
+        .give(to: to, from: from, source: source, reason: reason)
         .then { try bot.allCoins(for: pr.user) }
         .map { $0.compactMap { $0.value } .reduce(0, +) }
         .map(makeMessage)
