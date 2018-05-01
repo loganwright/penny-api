@@ -42,6 +42,28 @@ struct Slack {
         return client.post(url, headers: HTTPHeaders.init([("Authorization", "Bearer \(token)")]), content: emoji)
 
     }
+
+    func getUser(id: String) throws -> Future<SlackUser> {
+        struct UserResponse: Content {
+            let ok: Bool
+            let user: SlackUser
+        }
+
+        let url = "https://slack.com/api/users.info?token=\(token)&user=\(id)"
+        let client = try worker.make(Client.self)
+        return client
+            .post(url, headers: HTTPHeaders.init([("Authorization", "Bearer \(token)")]))
+            .become(UserResponse.self)
+            .map { resp in resp.user }
+
+    }
+}
+
+struct SlackUser: Content {
+    let id: String
+    let team_id: String
+    let name: String
+    let is_bot: Bool
 }
 
 func postGHComment(with req: Request) throws {
@@ -162,6 +184,7 @@ func connect(to urlString: String, worker: Container & DatabaseConnectable) thro
                 let packet = try! IncomingPacket.make(with: data)
                 guard packet.type == "message", packet.subtype != "bot_message" else {
                     if packet.type == "hello" { print("Penny slack, ONLINE.") }
+                    else { print("Got message: \(text)") }
                     return
                 }
 //                print("MESG: \(text)")

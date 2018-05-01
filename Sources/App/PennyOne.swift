@@ -8,6 +8,8 @@
 import Vapor
 import WebSocket
 import Penny
+import GitHub
+
 // MARK: Coin Suffix
 
 let validSuffixes = [
@@ -79,6 +81,15 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
     let trimmed = msg.text.trimmedWhitespace()
     let fromId = msg.user
     if trimmed.hasPrefix("<@") && trimmed.hasCoinSuffix { // leads w/ user
+        // D == DM
+        // G == Group or Private
+        // C == Public Channel
+        guard msg.channel.starts(with: "C") else {
+            print("Sneaky bastard, trying to get private coins")
+            // TODO: Send sneaky bastard snarky message
+            return
+        }
+
         guard
             let toId = trimmed.components(separatedBy: "<@").last?.components(separatedBy: ">").first,
             toId != fromId,
@@ -91,53 +102,74 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
         }
 
         let user = SlackUser(externalId: toId, externalSource: "slack")
-//        print("TODO: Filter Valid Channels!")
+        let bot = Penny.Bot(worker)
+        let count = bot.coins.give(to: toId, from: fromId, source: "slack", reason: "'twas but a gift.")
+            .then { try bot.allCoins(for: user) }
+            .map { $0.compactMap { $0.value } .reduce(0, +) }
 
-        if "1" == "1" { // validChannels.contains(channel) {
-            let bot = Penny.Bot(worker)
-            let count = bot.coins.give(to: toId, from: fromId, source: "slack", reason: "'twas but a gift.")
-                .then { try bot.allCoins(for: user) }
-                .map { $0.compactMap { $0.value } .reduce(0, +) }
+        let _ = count.flatMap(to: HTTPStatus.self) { total in
+            let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
+            let comment = "<@\(toId)> has \(total) :coin:"
+            do {
+                try slack.postComment(
+                    channel: msg.channel,
+                    text: comment,
+                    thread_ts: msg.thread_ts ?? msg.ts
+                    )
+                    .run()
+            } catch { print("\(#file):\(#line) - \(error)") }
 
-            let _ = count.flatMap(to: HTTPStatus.self) { total in
-                let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
-                let comment = "<@\(toId)> has \(total) :coin:"
-                do {
-                    try slack.postComment(
-                        channel: msg.channel,
-                        text: comment,
-                        thread_ts: msg.thread_ts ?? msg.ts
-                        )
-                        .run()
-                } catch { print("\(#file):\(#line) - \(error)") }
+            do {
+                try slack.postEmoji(emoji: "penny-dev", channel: msg.channel, ts: msg.ts)
+                    .run()
+            } catch { print("\(#file):\(#line) - \(error)") }
 
-                do {
-                    try slack.postEmoji(emoji: "penny-dev", channel: msg.channel, ts: msg.ts)
-                        .run()
-                } catch { print("\(#file):\(#line) - \(error)") }
-
-                // TODO: Remove
-                return Future.map(on: worker) { .ok }
-            }
-        } else {
-//            let response = SlackMessage(to: channel,
-//                                        text: "Sorry, I only work in public channels. Try thanking <@\(toId)> in <#\(GENERAL)>",
-//                threadTs: threadTs)
-//            try ws.send(response)
+            // TODO: Remove
+            return Future.map(on: worker) { .ok }
         }
     } else if trimmed.lowercased().contains("connect github") {
-        guard let login = trimmed.split(separator: " ").last else {
+        guard let login = trimmed.split(separator: " ").last.flatMap(String.init) else {
             print("unable to parse github login")
             return
         }
-        
-        let request = ConnectionRequest(
-                initiationId: fromId,
-                initiationSource: "slack",
-                requestedId: "todo",
-                requestedSource: "github"
-            )
-            .save(on: worker)
+
+        let github = GitHub.API(worker)
+        let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
+        let user = try! github.user(login: login)
+        let linkRequest = user.flatMap(to: AccountLinkRequest.self) { user in
+            return AccountLinkRequest(
+                    initiationId: fromId,
+                    initiationSource: "slack",
+                    requestedId: user.externalId,
+                    requestedSource: user.externalSource
+                )
+                .save(on: worker)
+        }
+
+        let newIssue = try! slack.getUser(id: msg.user).flatMap(to: GitHub.Issue.self) { user in
+            let slackLogin = user.name
+            var verification = "Hey there, @\(login), "
+            verification += "\(slackLogin) from slack, wants to link this GitHub account."
+            verification += "\n\n"
+            verification += "Continue:\n"
+            verification += "Comment on this issue with the word, `verify`."
+            verification += "\n\n"
+            verification += "**THAT'S NOT ME!**\n"
+            verification += "Comment on this issue with the word, `fraud`."
+            verification += "\n\n"
+            verification += "Something Else:"
+            verification += "Type anything else to close this issue."
+
+            return try github.postIssue(user: "penny-coin", repo: "validation", title: "Verifying: \(login)", body: verification)
+        }
+
+        linkRequest.and(newIssue).flatMap(to: Response.self) { (link, issue) in
+            print("Link: \(link)")
+            print("Issue: \(issue)")
+            let url = issue.html_url
+            let text = "Visit \(url) to connect your GitHub account."
+            return try slack.postComment(channel: msg.channel, text: text, thread_ts: msg.thread_ts ?? msg.ts)
+        }.run()
 
         // parse out github username
         // create connection request in data table

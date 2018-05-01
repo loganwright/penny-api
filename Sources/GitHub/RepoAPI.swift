@@ -17,6 +17,11 @@ extension User {
         let url = "\(GitHub.baseUrl)/users/\(username)"
         return try worker.client().user(at: url)
     }
+
+    public static func fetch(with worker: Container, forId id: String) throws -> Future<User> {
+        let url = "\(GitHub.baseUrl)/user/\(id)"
+        return try worker.client().user(at: url)
+    }
 }
 
 extension Client {

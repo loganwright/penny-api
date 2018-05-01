@@ -47,6 +47,7 @@ public func configure(
     migrations.add(model: PennyUser.self, database: .psql)
     migrations.add(model: Penny.User.self, database: .psql)
     migrations.add(model: Penny.Coin.self, database: .psql)
+    migrations.add(model: AccountLinkRequest.self, database: .psql)
     services.register(migrations)
 
     var commandConfig = CommandConfig.default()

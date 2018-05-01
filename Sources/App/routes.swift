@@ -86,7 +86,7 @@ public func routes(_ router: Router) throws {
         return webhook.map(runner.handle)
     }
 
-    router.get("comment-test") { req -> Future<Response> in
+    router.get("comment-test") { req -> Future<GitHub.Issue> in
         let github = GitHub.API(req)
         let login = "loganwright"
         let slackLogin = "logan"
@@ -100,6 +100,11 @@ public func routes(_ router: Router) throws {
         verification += "Comment on this issue with the word, `fraud`."
 
         return try github.postIssue(user: "penny-coin", repo: "validation", title: "Verifying: \(login.lowercased())", body: verification)
+    }
+
+    router.get("user") { req -> Future<SlackUser> in
+        let slack = Slack(token: SLACK_BOT_TOKEN, worker: req)
+        return try slack.getUser(id: "U1PF52H9C")
     }
 
     router.get("words", use: KeyGenerator.randomKey)

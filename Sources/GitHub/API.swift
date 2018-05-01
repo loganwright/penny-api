@@ -21,7 +21,7 @@ extension Container {
 }
 
 extension Future where T == Response {
-    func become<C: Content>(_ type: C.Type = C.self) -> Future<C> {
+    public func become<C: Content>(_ type: C.Type = C.self) -> Future<C> {
         return flatMap(to: C.self) { result in return try result.content.decode(C.self) }
     }
 }
@@ -46,10 +46,13 @@ public struct API {
     public func user(login: String) throws -> Future<User> {
         return try User.fetch(with: worker, forUsername: login)
     }
+    public func user(id: String) throws -> Future<User> {
+        return try User.fetch(with: worker, forId: id)
+    }
 }
 
 extension API {
-    public func postIssue(user: String, repo: String, title: String, body: String?) throws -> Future<Response> {
+    public func postIssue(user: String, repo: String, title: String, body: String?) throws -> Future<Issue> {
         let issueUrl = "\(baseUrl)/repos/\(user)/\(repo)/issues"
 
         struct Post: Content {
@@ -61,7 +64,7 @@ extension API {
 
         let post = Post(title: title, body: body, labels: ["validate"], assignees: [])
         let client = try worker.make(Client.self)
-        return client.post(issueUrl, headers: baseHeaders, content: post)
+        return client.post(issueUrl, headers: baseHeaders, content: post).become()
     }
 }
 

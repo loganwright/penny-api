@@ -22,4 +22,5 @@ public struct Issue: Content, Commentable {
     public let number: Int
     public let comments_url: String
     public let user: User
+    public let html_url: String
 }
