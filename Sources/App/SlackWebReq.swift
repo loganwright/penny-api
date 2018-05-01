@@ -94,8 +94,9 @@ func loadRealtimeApi(with app: Application) throws {
         // MARK:
 //        print("Realtime api resp: \n\n********\n\n\(resp)\n\n********\n\n")
         print("")
+        let req = Request(using: app)
         return try resp.content[String.self, at: "url"].flatMap(to: String.self) { (string) -> Future<String> in
-            try connect(to: string!, worker: app)
+            try connect(to: string!, worker: req)
             return Future.map(on: app) { string ?? "" }
         }
     }
@@ -142,7 +143,7 @@ func _connect(to urlString: String, worker: Container) throws {
     }
 }
 
-func connect(to urlString: String, worker: Container) throws {
+func connect(to urlString: String, worker: Container & DatabaseConnectable) throws {
     guard let url = URL(string: urlString), let host = url.host else {
         return
     }
@@ -168,18 +169,25 @@ func connect(to urlString: String, worker: Container) throws {
                     print("Couldn't parse message: \(text)")
                     return
                 }
-                //                let message = try! text.parse()
-                print("got messag: \(message)")
 
-                let newMessage = SlackMessage(to: message.channel, text: "Echo: \(message.text)")
-                let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
-                try! slack.postComment(
-                        channel: newMessage.channel,
-                        text: "Bza-- \(newMessage.text)",
-                        thread_ts: message.thread_ts ?? message.ts
-                    )
-                    .run()
-                try! slack.postEmoji(emoji: "penny-dev", channel: message.channel, ts: message.ts).run()
+                handle(msg: message, worker: worker)
+                //                let message = try! text.parse()
+//                print("got messag: \(message)")
+//                let newMessage = SlackMessage(to: message.channel, text: "Echo: \(message.text)")
+//                let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
+//                do {
+//                    try slack.postComment(
+//                        channel: newMessage.channel,
+//                        text: "Bza-- \(newMessage.text)",
+//                        thread_ts: message.thread_ts ?? message.ts
+//                    )
+//                    .run()
+//                } catch { print("\(#file):\(#line) - \(error)") }
+//
+//                do {
+//                    try slack.postEmoji(emoji: "penny-dev", channel: message.channel, ts: message.ts)
+//                        .run()
+//                } catch { print("\(#file):\(#line) - \(error)") }
             }
 
             ws.onClose.always {
