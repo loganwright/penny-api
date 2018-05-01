@@ -21,11 +21,28 @@ extension Container {
 }
 
 extension Future where T == Response {
-    func become<C: Content>(_ type: C.Type) -> Future<C> {
+    func become<C: Content>(_ type: C.Type = C.self) -> Future<C> {
         return flatMap(to: C.self) { result in return try result.content.decode(C.self) }
     }
 }
 
+public struct API {
+    public let worker: Container
+    public init(_ worker: Container) {
+        self.worker = worker
+    }
+
+    public func postComment(to commentable: Commentable, _ body: String) throws -> Future<Response> {
+        struct Comment: Content {
+            let body: String
+        }
+
+        let commentsUrl = commentable.comments_url
+        let comment = Comment(body: body)
+        let client = try worker.make(Client.self)
+        return client.post(commentsUrl, headers: baseHeaders, content: comment)
+    }
+}
 
 public func postComment(with worker: Container, to commentable: Commentable, _ body: String) throws -> Future<Response> {
     struct Comment: Content {

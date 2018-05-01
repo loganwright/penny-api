@@ -127,13 +127,13 @@ typealias MXE = MockExternalUser
 
 struct MockExternalUser: ExternalUser {
     let externalId: String
-    let source: String
+    let externalSource: String
 
     static func randomGitHub() -> MockExternalUser {
         let int = try! OSRandom().generate(Int.self)
         return MockExternalUser(
             externalId: int.description,
-            source: "github"
+            externalSource: "github"
         )
     }
 
@@ -141,7 +141,7 @@ struct MockExternalUser: ExternalUser {
         let uuid = UUID().uuidString
         return MockExternalUser(
             externalId: uuid,
-            source: "slack"
+            externalSource: "slack"
         )
     }
 }

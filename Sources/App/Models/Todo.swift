@@ -215,62 +215,62 @@ import GitHub
 //    }
 //}
 
-extension Coin {
-    static func sourceFilter(source: String, id: String) throws -> QueryFilterItem<PostgreSQLDatabase> {
-        let sourceFilter = try QueryFilter<PostgreSQLDatabase>(
-            field: "source",
-            type: .equals,
-            value: .data(source)
-        )
+//extension Coin {
+//    static func sourceFilter(source: String, id: String) throws -> QueryFilterItem<PostgreSQLDatabase> {
+//        let sourceFilter = try QueryFilter<PostgreSQLDatabase>(
+//            field: "source",
+//            type: .equals,
+//            value: .data(source)
+//        )
+//
+//        let idFilter = try QueryFilter<PostgreSQLDatabase>(
+//            field: "to",
+//            type: .equals,
+//            value: .data(id)
+//        )
+//
+//        let source = QueryFilterItem.single(sourceFilter)
+//        let id = QueryFilterItem.single(idFilter)
+//        return .group(.and, [source, id])
+//    }
+//}
 
-        let idFilter = try QueryFilter<PostgreSQLDatabase>(
-            field: "to",
-            type: .equals,
-            value: .data(id)
-        )
+//final class Coin: Codable {
+//    var id: UUID?
+//
+//    /// ie: GitHub, Slack, other future sources
+//    let source: String
+//    /// ie: who should receive the coin
+//    /// the id here will correspond to the source
+//    let to: String
+//    /// ie: who gave the coin
+//    /// the id here will correspond to the source, for example, if source is GitHub, it
+//    /// will be a GitHub identifier
+//    let from: String
+//
+//    /// An indication of the reason to possibly begin categorizing more
+//    let reason: String?
+//
+//    /// The value of a given coin, for potentially allowing more coins in future
+//    let value: Int
+//
+//    /// Date created
+//    let createdAt: Date
+//
+//    init(source: String, to: String, from: String, reason: String?, value: Int = 1, createdAt: Date? = nil) {
+//        self.source = source
+//        self.to = to
+//        self.from = from
+//        self.reason = reason
+//        self.value = value
+//        self.createdAt = createdAt ?? Date()
+//    }
+//}
 
-        let source = QueryFilterItem.single(sourceFilter)
-        let id = QueryFilterItem.single(idFilter)
-        return .group(.and, [source, id])
-    }
-}
-
-final class Coin: Codable {
-    var id: UUID?
-
-    /// ie: GitHub, Slack, other future sources
-    let source: String
-    /// ie: who should receive the coin
-    /// the id here will correspond to the source
-    let to: String
-    /// ie: who gave the coin
-    /// the id here will correspond to the source, for example, if source is GitHub, it
-    /// will be a GitHub identifier
-    let from: String
-
-    /// An indication of the reason to possibly begin categorizing more
-    let reason: String?
-
-    /// The value of a given coin, for potentially allowing more coins in future
-    let value: Int
-
-    /// Date created
-    let createdAt: Date
-
-    init(source: String, to: String, from: String, reason: String?, value: Int = 1, createdAt: Date? = nil) {
-        self.source = source
-        self.to = to
-        self.from = from
-        self.reason = reason
-        self.value = value
-        self.createdAt = createdAt ?? Date()
-    }
-}
-
-extension Coin: PostgreSQLUUIDModel {}
-extension Coin: Content {}
-extension Coin: Migration {}
-extension Coin: Parameter {}
+//extension Coin: PostgreSQLUUIDModel {}
+//extension Coin: Content {}
+//extension Coin: Migration {}
+//extension Coin: Parameter {}
 
 
 //final class CoinGift {

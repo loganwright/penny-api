@@ -10,35 +10,36 @@ func handle(_ webhook: WebHook, on req: Request) throws -> Future<HTTPStatus> {
     guard let repo = webhook.payload.repository else { throw "expected repository" }
     guard webhook.payload.action == "closed", pr.merged == true else { return Future.map(on: req) { .ok } }
 
-    let repoName = repo.full_name
-    let number = pr.number
-
     let to = pr.user.externalId
     // TODO: Should these be from the merger? Could also be from Penny's GitHub id?
     let from = "penny"
-    let reason = "merged pullrequest – @\(repo.full_name)#\(pr.number)"
-    let bot = Penny.Bot(req)
-    return bot.coins.give(to: to, from: from, source: "github", reason: reason).flatMap(to: HTTPStatus.self) { coin in
-        return try bot.user.findOrCreate(pr.user).flatMap(to: HTTPStatus.self) { user in
-            return try bot.coins.all(for: user).flatMap(to: HTTPStatus.self) { coins in
-                let value = coins.compactMap { $0.value } .reduce(0, +)
+    let reason = "merged pullrequest – \(repo.full_name)#\(pr.number)"
 
-
-                var comment = "Hey @\(pr.user.login), you just merged a pull request, have a coin! "
-                comment += "\n\n"
-                comment += "You now have \(value) coins."
-                return try GitHub.postComment(with: req, to: pr, comment).map { response in
-                    response.http.status
-                }
-//                return try AAGitHub(req).postIssueComment(comment, fullRepoName: repoName, issue: number).flatMap(to: HTTPStatus.self) { resp in
-//                    return Future.map(on: req) { resp.http.status }
-//                }
-            }
-        }
+    func makeMessage(total: Int) -> String {
+        var comment = "Hey @\(pr.user.login), you just merged a pull request, have a coin! "
+        comment += "\n\n"
+        comment += "You now have \(total) coins."
+        return comment
     }
+
+    let github = GitHub.API(req)
+    let bot = Penny.Bot(req)
+    
+    return bot.coins
+        .give(to: to, from: from, source: "github", reason: reason)
+        .then { try bot.allCoins(for: pr.user) }
+        .map { $0.compactMap { $0.value } .reduce(0, +) }
+        .map(makeMessage)
+        .map { try github.postComment(to: pr, $0) }
+        .map { $0.http.status }
 }
 
-//func createCoin(_ req: Request) -> Future<Coin> {
-//    let coin = Coin()
-//    return coin.save(on: req)
-//}
+extension Future {
+    func then<U>(_ closure: @escaping () throws -> Future<U>) -> Future<U> {
+        return flatMap(to: U.self) { _ in try closure() }
+    }
+
+    func map<U>(_ closure: @escaping (T) throws -> Future<U>) -> Future<U> {
+        return flatMap(to: U.self, closure)
+    }
+}

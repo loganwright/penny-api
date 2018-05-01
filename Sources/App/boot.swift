@@ -1,14 +1,11 @@
 import Routing
 import Vapor
 
-var github: AAGitHub!
 /// Called after your application has initialized.
 ///
 /// [Learn More →](https://docs.vapor.codes/3.0/getting-started/structure/#bootswift)
 public func boot(_ app: Application) throws {
-    github = AAGitHub(app)
     // your code here
-//    try loadRealtimeApi(with: app)
 }
 
 public func start() -> Never {

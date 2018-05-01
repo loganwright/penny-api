@@ -7,141 +7,68 @@ import Crypto
 
 extension GitHub.User: ExternalUser {
     public var externalId: String { return id.description }
-    public var source: String { return "github" }
+    public var externalSource: String { return "github" }
 }
 
-/// Register your application's routes here.
-///
-/// [Learn More →](https://docs.vapor.codes/3.0/getting-started/structure/#routesswift)
+extension URL {
+    var queryItems: [String: String?] {
+        let comps = URLComponents(url: self, resolvingAgainstBaseURL: false)
+
+        var items = [String: String]()
+        comps?.queryItems?.forEach { item in
+            items[item.name] = item.value
+        }
+        return items
+    }
+}
+
 public func routes(_ router: Router) throws {
-    // Basic "Hello, world!" example
-    router.get("hello") { req in
-        return "\(Date())"
+    // I always keep a status check
+    router.get("status") { req in
+        return "Alive and well: \(Date())"
+    }
+
+    router.get("coins") { req -> EventLoopFuture<[Coin]> in
+        struct CoinQuery: Content {
+            let id: String
+            let source: String
+            let foo: String?
+        }
+        let aa = try req.query.decode(CoinQuery.self)
+        print(aa)
+        print("")
+
+        let query = req.http.url.queryItems
+        guard
+            let id = query["id"].flatMap({ $0 }),
+            let source = query["source"].flatMap({$0})
+            else { throw "no" }
+
+        struct User: ExternalUser {
+            let externalId: String
+            let externalSource: String
+        }
+        let user = User(externalId: id, externalSource: source)
+
+        let bot = Penny.Bot(req)
+        return try bot.allCoins(for: user)
+    }
+
+    router.get("coins", "github", String.parameter) { req -> Future<[Coin]> in
+        let username = try req.parameters.next(String.self)
+        let user = try GitHub.User.fetch(with: req, forUsername: username)
+
+        let bot = Penny.Bot(req)
+        return user.flatMap(to: [Coin].self, bot.allCoins)
     }
 
     router.post("gh-webhook") { req -> Future<HTTPStatus> in
-        print("WEBHOOK:\n\n\(req)\n\n***********")
         return try GitHub.validateWebHook(req, secret: "foo-bar")
             .flatMap(to: HTTPStatus.self) { webhook in
                 return try handle(webhook, on: req)
             }
     }
 
-//    router.post("gh-webhook") { req -> Future<HTTPStatus> in
-//        guard let event = req.http.headers["X-GitHub-Event"].first else { throw "Invalid github event" }
-//        // Right now, just support PR merge.
-//        guard event == "pull_request" else { return Future.map(on: req) { .ok } }
-//        let action = req.content[String.self, at: "action"]
-//        return action.flatMap(to: HTTPStatus.self) { action in
-//            guard let action = action else { throw "Invalid github event – missing action" }
-//            guard action == "closed" else { return Future.map(on: req) { .ok } }
-//            return req.content[PullRequest.self, at: "pull_request"].flatMap(to: HTTPStatus.self) { pr in
-//                guard let pr = pr else { throw "Expected a pull request" }
-//                guard pr.merged == true else { return Future.map(on: req) { .ok } }
-//                let repo = req.content[Repo.self, at: "repository"]
-//                print("Repository: \(repo)")
-//                print("")
-//                return repo.flatMap(to: HTTPStatus.self) { repo in
-//                    guard let repo = repo else { throw "expected repo" }
-//                    let repoName = repo.full_name
-//                    let number = pr.number
-//                    return try GitHub(req).postIssueComment("Hey, you just merged a pull request!", fullRepoName: repoName, issue: number).flatMap(to: HTTPStatus.self) { resp in
-//                        return Future.map(on: req) { resp.http.status }
-//                    }
-////                    return try GitHub(req).postComment(to: pr, "Hey, you just merged a pull request!").flatMap(to: HTTPStatus.self) { resp in
-////                        return Future.map(on: req) { resp.http.status }
-////                    }
-//                }
-//
-//                // return try github.postComment(comment, issue: 1, username: "penny-coin-test-org", project: "test-00")
-//
-//                // to disclude owners?
-//                // guard pr.author_association != "OWNER" else { return Future.map(on: req) { .ok } }
-//
-//                return Future.map(on: req) { .ok }
-//            }
-//        }
-//
-////        guard let action = req.content[String.self, at: "action"] else { throw "Invalid github event" }
-//
-//        print(req)
-//        print("")
-////        let event = req.http.headers["X-GitHub-Event"].first
-//        print(event)
-//        print("")
-//        if let event = req.http.headers["X-GitHub-Event"].first, event == "issue_comment" {
-//            /*
-//             return try req.content.decode(Todo.self).flatMap(to: Todo.self) { todo in
-//             return todo.update(on: req)
-//             }
-//             */
-////            let resp = try req.content.decode(GHWebHookResponse.self)
-////            resp.flatMap(to: HTTPStatus.self, { (re) -> EventLoopFuture<Wrapped> in
-////                <#code#>
-////            })
-//            return try req.content.decode(GHWebHookResponse.self).flatMap(to: HTTPStatus.self) { re -> Future<HTTPStatus> in
-//
-//                print("got \(re)")
-//                print("")
-//                return try github.postComment("Hey, cool stuff, dude.", issue: re.issue.number, username: re.repository.owner.login, project: re.repository.name).flatMap(to: HTTPStatus.self) { _ in return Future.map(on: req) { .ok } }
-//            }
-////
-////            let action = req.content[String.self, at: "action"]
-////            let issueNumber = req.content[Int.self, at: "issue", "number"]
-////            let project = req.content[String.self, at: "repository", "name"]
-////            let username = req.content[String.self, at: "repository", "user", "login"]
-////
-////            print("got \(action): \(issueNumber): \(project): \(username)")
-////            let _ = try github.postComment("Hey, cool stuff, dude.", issue: issueNumber, username: username, project: project)
-//        }
-//
-//        print(req)
-//        print("")
-//        return Future.map(on: req) { return .ok }
-//    }
-
-    router.get("post-comment", String.parameter) { req -> Future<Response> in
-        let comment = try req.parameter(String.self)
-        return try github.postComment(comment, issue: 1, username: "penny-coin-test-org", project: "test-00")
-    }
-
-//    router.get("create-gh") { (req: Request) -> Future<Coin> in
-//        return Penny().createGitHub(with: req)
-//    }
-//
-//    router.get("create-sl") { (req: Request) -> Future<Coin> in
-//        return Penny().createSlack(with: req)
-//    }
-//
-//    router.get("list") { req in
-//        return Coin.query(on: req).all()
-//    }
-//    router.get("list-both") { req -> Future<[Coin]> in
-//        let user = User.init(slack: "foo-sl", github: "foo-gh")
-//        return try Penny().coins(with: req, for: user)
-//    }
-//
-//    router.get("list-gh") { req -> Future<[Coin]> in
-//        let user = User.init(slack: nil, github: "foo-gh")
-//        return try Penny().coins(with: req, for: user)
-//    }
-//
-//    router.get("list-sl") { req -> Future<[Coin]> in
-//        let user = User.init(slack: "foo-sl", github: nil)
-//        return try Penny().coins(with: req, for: user)
-//    }
-
     router.get("words", use: KeyGenerator.randomKey)
-
-
-
-    // Example of configuring a controller
-//    let todoController = TodoController()
-//    router.get("todos", use: todoController.index)
-//    router.post("todos", use: todoController.create)
-//    router.delete("todos", Todo.parameter, use: todoController.delete)
 }
-
-//        let webhook = try req.content.decode(WebHook.self)
-//        return webhook.map(to: HTTPStatus.self, GitHub.process)
 
