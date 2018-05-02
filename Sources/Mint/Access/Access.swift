@@ -1,7 +1,24 @@
 import Vapor
 import FluentPostgreSQL
 
+public typealias DatabaseWorker = Container & DatabaseConnectable
+
 extension String: Error {}
+
+public struct Access {
+    // Accessors
+    public let user: UserAccess
+    public let coins: Bot.CoinAccess
+
+    // Worker
+    let worker: DatabaseWorker
+
+    public init(_ worker: Container & DatabaseConnectable) {
+        self.worker = worker
+        self.user = .init(worker)
+        self.coins = .init(worker: worker)
+    }
+}
 
 public struct Bot {
     // Accessors

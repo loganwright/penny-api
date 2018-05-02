@@ -1,9 +1,12 @@
 import Vapor
 import FluentPostgreSQL
 
-extension Bot {
+extension Access {
     public struct UserAccess {
         let worker: Container & DatabaseConnectable
+        public init(_ worker: Container & DatabaseConnectable) {
+            self.worker = worker
+        }
 
         public func findOrCreate(_ externalUser: ExternalUser) throws -> Future<User> {
             let found = try find(externalUser)
