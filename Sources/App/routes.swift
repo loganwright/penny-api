@@ -83,10 +83,10 @@ public func routes(_ router: Router) throws {
                 let two = U(externalId: record.requestedId, externalSource: record.requestedSource)
                 let bot = Penny.Bot(req)
                 let new = try bot.user.combine([one, two])
-                let coins = try bot.coins.all(for: new)
+                let coins = bot.coins.give(to: hook.sender.externalId, from: "penny", source: hook.sender.externalSource, reason: "linked github account.").flatMap(to: [Coin].self) { _ in return try bot.coins.all(for: new) }
                 return coins.flatMap(to: HTTPStatus.self) { coins in
                     let value = coins.map { $0.value } .reduce(0, +)
-                    let message = "You have \(value) coins."
+                    let message = "Have a coin for linking your GitHub! You now have \(value) coins."
                     let github = GitHub.API(req)
                     let comment = try github.postComment(to: issue, message)
                     return comment.flatMap(to: HTTPStatus.self) { resp in
@@ -104,32 +104,13 @@ public func routes(_ router: Router) throws {
         let gh = GitHub.API(req)
         return try gh.postIssue(user: "penny-coin", repo: "validation", title: "Hi", body: "Delete me.").flatMap(to: Issue.self, gh.close)
     }
+
+    router.get("users") { req -> Future<[Penny.User]> in
+        return Penny.User.query(on: req).all()
+    }
+
     router.get("links") { req -> Future<[AccountLinkRequest]> in
         return AccountLinkRequest.query(on: req).all()
-    }
-    router.get("coins") { req -> EventLoopFuture<[Coin]> in
-        struct CoinQuery: Content {
-            let id: String
-            let source: String
-        }
-        let query = try req.query.decode(CoinQuery.self)
-
-        struct User: ExternalUser {
-            let externalId: String
-            let externalSource: String
-        }
-        let user = User(externalId: query.id, externalSource: query.source)
-
-        let bot = Penny.Bot(req)
-        return try bot.allCoins(for: user)
-    }
-
-    router.get("coins", "github", String.parameter) { req -> Future<[Coin]> in
-        let username = try req.parameters.next(String.self)
-        let user = try GitHub.User.fetch(with: req, forUsername: username)
-
-        let bot = Penny.Bot(req)
-        return user.map(bot.allCoins)
     }
 
     router.post("gh-webhook") { req -> Future<HTTPStatus> in

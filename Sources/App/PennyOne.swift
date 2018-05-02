@@ -69,6 +69,8 @@ import Foundation
 let PENNY = "U1PF52H9C"
 let GENERAL = "C0N67MJ83"
 
+import PennyCore
+
 func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
     let last3Seconds = NSDate().timeIntervalSince1970 - 3
     guard
@@ -76,11 +78,12 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
         ts >= last3Seconds
         else { return }
 
-    
+    let processor = MessageProcessor()
+
 
     let trimmed = msg.text.trimmedWhitespace()
     let fromId = msg.user
-    if trimmed.hasPrefix("<@") && trimmed.hasCoinSuffix { // leads w/ user
+    if processor.shouldGiftCoin(in: trimmed) {
         // D == DM
         // G == Group or Private
         // C == Public Channel
@@ -90,6 +93,9 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
             return
         }
 
+        // Avoid Loop
+        guard fromId != PENNY else { return }
+        let idsToGift = processor.userIdsToGift(in: trimmed, fromId: fromId)
         guard
             let toId = trimmed.components(separatedBy: "<@").last?.components(separatedBy: ">").first,
             toId != fromId,
@@ -136,15 +142,6 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
         let github = GitHub.API(worker)
         let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
         let user = try! github.user(login: login)
-//        let linkRequest = user.flatMap(to: AccountLinkRequest.self) { user in
-//            return AccountLinkRequest(
-//                    initiationId: fromId,
-//                    initiationSource: "slack",
-//                    requestedId: user.externalId,
-//                    requestedSource: user.externalSource
-//                )
-//                .save(on: worker)
-//        }
 
         let newIssue = try! slack.getUser(id: msg.user).flatMap(to: GitHub.Issue.self) { user in
             let slackLogin = user.name

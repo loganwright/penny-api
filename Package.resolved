@@ -74,6 +74,15 @@
         }
       },
       {
+        "package": "PennyCore",
+        "repositoryURL": "/Users/loganwright/Desktop/penny-core",
+        "state": {
+          "branch": "master",
+          "revision": "d322ef2bd2e5e8dfdd106bb35242b910eb1d980d",
+          "version": null
+        }
+      },
+      {
         "package": "PostgreSQL",
         "repositoryURL": "https://github.com/vapor/postgresql.git",
         "state": {
