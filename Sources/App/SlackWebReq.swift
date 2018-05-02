@@ -98,7 +98,7 @@ func postGHComment(with req: Request) throws {
     }
 }
 
-let SLACK_BOT_TOKEN = Environment.get("BOT_TOKEN")!
+let SLACK_BOT_TOKEN = "xoxb-53115077872-1xDViI7osWlVEyDqwVJqj2x7"//Environment.get("BOT_TOKEN")!
 
 func loadRealtimeApi(with app: Application) throws {
     let tokenQuery = URLQueryItem(name: "token", value: SLACK_BOT_TOKEN)
