@@ -10,13 +10,13 @@ let package = Package(
         .package(url: "../penny-core", .branch("master"))
     ],
     targets: [
-        .target(name: "App", dependencies: ["FluentPostgreSQL", "Vapor", "GitHub", "Penny", "PennyCore"]),
-        .target(name: "Penny", dependencies: ["FluentPostgreSQL", "Vapor"]),
+        .target(name: "App", dependencies: ["FluentPostgreSQL", "Vapor", "GitHub", "Mint", "PennyCore"]),
+        .target(name: "Mint", dependencies: ["FluentPostgreSQL", "Vapor"]),
         .target(name: "GitHub", dependencies: ["FluentPostgreSQL", "Vapor"]),
         .target(name: "Run", dependencies: ["App"]),
 
         .testTarget(name: "AppTests", dependencies: ["App"]),
-        .testTarget(name: "PennyTests", dependencies: ["FluentPostgreSQL", "Vapor", "App"]),
+        .testTarget(name: "MintTests", dependencies: ["Mint", "FluentPostgreSQL", "Vapor", "App"]),
         .testTarget(name: "GitHubTests", dependencies: ["GitHub"]),
     ]
 )

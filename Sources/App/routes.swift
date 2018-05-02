@@ -1,7 +1,7 @@
 import Routing
 import Vapor
 import GitHub
-import Penny
+import Mint
 
 import Crypto
 
@@ -81,7 +81,7 @@ public func routes(_ router: Router) throws {
 
                 let one = U(externalId: record.initiationId, externalSource: record.initiationSource)
                 let two = U(externalId: record.requestedId, externalSource: record.requestedSource)
-                let bot = Penny.Bot(req)
+                let bot = Mint.Bot(req)
                 let new = try bot.user.combine([one, two])
                 let coins = bot.coins.give(to: hook.sender.externalId, from: "penny", source: hook.sender.externalSource, reason: "linked github account.").flatMap(to: [Coin].self) { _ in return try bot.coins.all(for: new) }
                 return coins.flatMap(to: HTTPStatus.self) { coins in
@@ -105,8 +105,8 @@ public func routes(_ router: Router) throws {
         return try gh.postIssue(user: "penny-coin", repo: "validation", title: "Hi", body: "Delete me.").flatMap(to: Issue.self, gh.close)
     }
 
-    router.get("users") { req -> Future<[Penny.User]> in
-        return Penny.User.query(on: req).all()
+    router.get("users") { req -> Future<[Mint.User]> in
+        return Mint.User.query(on: req).all()
     }
 
     router.get("links") { req -> Future<[AccountLinkRequest]> in

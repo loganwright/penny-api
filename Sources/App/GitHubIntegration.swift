@@ -1,7 +1,7 @@
 import Foundation
 import Vapor
 import GitHub
-import Penny
+import Mint
 import Crypto
 
 struct WebHookRunner {
@@ -47,7 +47,7 @@ struct WebHookRunner {
         }
 
         let github = GitHub.API(req)
-        let bot = Penny.Bot(req)
+        let bot = Mint.Bot(req)
         return bot.coins
             .give(to: to, from: from, source: source, reason: reason)
             .then { try bot.allCoins(for: pr.user) }
@@ -79,7 +79,7 @@ func handle(_ webhook: WebHook, on req: Request) throws -> Future<HTTPStatus> {
     }
 
     let github = GitHub.API(req)
-    let bot = Penny.Bot(req)
+    let bot = Mint.Bot(req)
     return bot.coins
         .give(to: to, from: from, source: source, reason: reason)
         .then { try bot.allCoins(for: pr.user) }

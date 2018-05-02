@@ -7,7 +7,7 @@
 
 import Vapor
 import WebSocket
-import Penny
+import Mint
 import GitHub
 
 // MARK: Coin Suffix
@@ -108,7 +108,7 @@ func handle(msg: IncomingMessage, worker: DatabaseConnectable & Container) {
         }
 
         let user = SlackUser(externalId: toId, externalSource: "slack")
-        let bot = Penny.Bot(worker)
+        let bot = Mint.Bot(worker)
         let count = bot.coins.give(to: toId, from: fromId, source: "slack", reason: "'twas but a gift.")
             .then { try bot.allCoins(for: user) }
             .map { $0.compactMap { $0.value } .reduce(0, +) }

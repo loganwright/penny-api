@@ -6,7 +6,7 @@ import XCTest
 import Vapor
 import Crypto
 import Random
-@testable import Penny
+@testable import Mint
 
 final class PennyTests: XCTestCase {
     func testUserCrud() throws {
@@ -100,9 +100,9 @@ final class PennyTests: XCTestCase {
     ]
 }
 
-func mockPenny() -> Penny.Bot {
+func mockPenny() -> Mint.Bot {
     let response = Request(using: app)
-    return Penny.Bot(response)
+    return Mint.Bot(response)
 }
 
 let app: Application = {

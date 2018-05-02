@@ -1,6 +1,6 @@
 import Vapor
 import FluentPostgreSQL
-import Penny
+import Mint
 
 /// Called before your application initializes.
 ///
@@ -45,8 +45,8 @@ public func configure(
     var migrations = MigrationConfig()
     migrations.add(model: Coin.self, database: .psql)
     migrations.add(model: PennyUser.self, database: .psql)
-    migrations.add(model: Penny.User.self, database: .psql)
-    migrations.add(model: Penny.Coin.self, database: .psql)
+    migrations.add(model: Mint.User.self, database: .psql)
+    migrations.add(model: Mint.Coin.self, database: .psql)
     migrations.add(model: AccountLinkRequest.self, database: .psql)
     services.register(migrations)
 

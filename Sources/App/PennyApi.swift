@@ -1,4 +1,4 @@
-import Penny
+import Mint
 import Vapor
 import GitHub
 
@@ -18,7 +18,7 @@ public func pennyapi(_ router: Router) throws {
         }
         let query = try req.query.decode(CoinQuery.self)
 
-        let bot = Penny.Bot(req)
+        let bot = Mint.Bot(req)
         return try bot.allCoins(for: query)
     }
 
@@ -26,7 +26,7 @@ public func pennyapi(_ router: Router) throws {
         let username = try req.parameters.next(String.self)
         let user = try GitHub.User.fetch(with: req, forUsername: username)
 
-        let bot = Penny.Bot(req)
+        let bot = Mint.Bot(req)
         return user.map(bot.allCoins)
     }
 }
