@@ -7,16 +7,43 @@ extension GitHub.User: Mint.ExternalAccount {
     public var externalSource: String { return "github" }
 }
 
-public func pennyapi(_ router: Router) throws {
-    router.get("status") { req in
+let authorizedTokens: [String] = [
+    "12345"
+]
+
+import Foundation
+
+struct PennyAuthMiddleware: Middleware {
+    func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
+        guard
+            let token = request.http.headers["Authorization"]
+                .first?
+                .components(separatedBy: "Bearer ")
+                .last,
+            authorizedTokens.contains(token)
+            else { throw "unauthorized" }
+
+        return try next.respond(to: request)
+    }
+}
+
+public func pennyapi(_ open: Router) throws {
+    // Run through basic auth verification
+    let secure = open.grouped(PennyAuthMiddleware())
+
+    // MARK: Status
+
+    open.get("status") { req in
         return "Alive and well: \(Date())"
     }
 
+    secure.get("secure") { _ in "authorized" }
+
     // MARK: Coins
 
-    router.get("coins") { Coin.query(on: $0).all() } // TODO: Remove in production
+    open.get("coins") { Coin.query(on: $0).all() } // TODO: Remove in production
 
-    router.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
+    open.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
         let source = try req.parameters.next(String.self)
         let id = try req.parameters.next(String.self)
 
@@ -24,7 +51,7 @@ public func pennyapi(_ router: Router) throws {
         return try mint.coins.all(source: source, sourceId: id)
     }
 
-    router.get("coins", "github-username", String.parameter) { req -> Future<[Coin]> in
+    open.get("coins", "github-username", String.parameter) { req -> Future<[Coin]> in
         let username = try req.parameters.next(String.self)
         let github = GitHub.API(req)
         let user = try github.user(login: username)
@@ -33,7 +60,7 @@ public func pennyapi(_ router: Router) throws {
         return user.flatMap(to: [Coin].self, mint.coins.all)
     }
 
-    router.post("coins") { request -> Future<[Coin]> in
+    secure.post("coins") { request -> Future<[Coin]> in
         struct Package: Content {
             let from: String
             let to: String
@@ -54,9 +81,9 @@ public func pennyapi(_ router: Router) throws {
 
     // MARK: Accounts
 
-    router.get("accounts") { Account.query(on: $0).all() } // TODO: Remove in production
+    open.get("accounts") { Account.query(on: $0).all() } // TODO: Remove in production
 
-    router.get("accounts", String.parameter, String.parameter) { req -> Future<Account> in
+    secure.get("accounts", String.parameter, String.parameter) { req -> Future<Account> in
         let source = try req.parameters.next(String.self)
         let id = try req.parameters.next(String.self)
 
@@ -67,7 +94,7 @@ public func pennyapi(_ router: Router) throws {
     // MARK: Links
 
     // Submit Link Request
-    router.post("links") { req -> Future<AccountLinkRequest> in
+    secure.post("links") { req -> Future<AccountLinkRequest> in
         struct Package: Content {
             let initiationSource: String
             let initiationId: String
@@ -92,7 +119,7 @@ public func pennyapi(_ router: Router) throws {
     }
 
     // Retrieve Existing Link Request
-    router.get("links") { req -> Future<AccountLinkRequest> in
+    secure.get("links") { req -> Future<AccountLinkRequest> in
         struct Package: Content {
             let requestedSource: String
             let requestedId: String
@@ -119,7 +146,7 @@ public func pennyapi(_ router: Router) throws {
     }
 
     // Approve Existing Link Request
-    router.post("links", "approve") { req -> Future<Account> in
+    secure.post("links", "approve") { req -> Future<Account> in
         let link = try req.content.decode(AccountLinkRequest.self)
 
         let vault = Vault(req)
