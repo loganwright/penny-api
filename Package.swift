@@ -16,7 +16,7 @@ let package = Package(
         .target(name: "Run", dependencies: ["App"]),
 
         .testTarget(name: "AppTests", dependencies: ["App"]),
-        .testTarget(name: "MintTests", dependencies: ["Mint", "FluentPostgreSQL", "Vapor", "App"]),
+        .testTarget(name: "MintTests", dependencies: ["Mint", "FluentPostgreSQL", "Vapor"]),
         .testTarget(name: "GitHubTests", dependencies: ["GitHub"]),
     ]
 )

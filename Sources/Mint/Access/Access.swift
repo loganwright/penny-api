@@ -5,6 +5,19 @@ public typealias DatabaseWorker = Container & DatabaseConnectable
 
 extension String: Error {}
 
+public struct Vault {
+
+    let accounts: AccountAccess
+
+    // Worker
+    let worker: DatabaseWorker
+
+    public init(_ worker: DatabaseWorker) {
+        self.worker = worker
+        self.accounts = AccountAccess(worker)
+    }
+}
+
 public struct Access {
     // Accessors
     public let user: UserAccess

@@ -1,5 +1,3 @@
-import App
-
 import Dispatch
 import XCTest
 
@@ -9,18 +7,30 @@ import Random
 @testable import Mint
 
 final class PennyTests: XCTestCase {
+
+//    func testAccount() throws {
+//        let worker = Request(using: app)
+//        let one = try saveExternal(source: "github", id: "932198", on: worker).wait()
+//        print(one)
+//        print("")
+//
+//        let all = try allExternals(on: worker).wait()
+//        print(all)
+//        print("")
+//    }
+//
     func testUserCrud() throws {
         // MARK: GitHub
-        let ghe = MockExternalUser.randomGitHub()
-        let github = try testUserCrud(on: ghe)
-        XCTAssertEqual(github?.github, ghe.externalId)
+        let ghe = MockExternalAccount.randomGitHub()
+        let github = try! testUserCrud(on: ghe)
+//        XCTAssertEqual(github?.github, ghe.externalId)
 
         // MARK: Slack
-        let sle = MockExternalUser.randomSlack()
+        let sle = MockExternalAccount.randomSlack()
         let slack = try testUserCrud(on: sle)
         XCTAssertEqual(slack?.slack, sle.externalId)
 
-        var users = [User]()
+        var users = [Account]()
         if let slack = slack {
             users.append(slack)
         }
@@ -28,15 +38,28 @@ final class PennyTests: XCTestCase {
             users.append(github)
         }
 
+        let mint = mockVault()
+
+        // MARK: Fetch All, Test Delete Query
+        let ids = users.compactMap { $0.id }
+        XCTAssertEqual(users.count, ids.count)
+        let fetch = try mint.accounts.fetchQuery(ids: ids)
+        let fetched = try fetch.all().wait()
+        let fetchedIds = fetched.compactMap { $0.id }
+        XCTAssertEqual(ids.map({ $0.uuidString }).sorted(by: <), fetchedIds.map({ $0.uuidString }).sorted(by: <))
+
         // MARK: Combine
-        let penny = mockPenny()
-        let combined = try penny.user.combine(users).wait()
+        let combined = try mint.accounts.combine(users).wait()
         XCTAssertEqual(combined.slack, sle.externalId)
         XCTAssertEqual(combined.github, ghe.externalId)
 
+        // MARK: Ensure Originals Gone
+        let originalUsers = try fetch.all().wait()
+        XCTAssert(originalUsers.isEmpty)
+
         // MARK: Retrieve Combined
-        let one = try penny.user.findOrCreate(ghe).wait()
-        let two = try penny.user.findOrCreate(sle).wait()
+        let one = try mint.accounts.get(ghe).wait()
+        let two = try mint.accounts.get(sle).wait()
 
         let group = [one, two, combined].compactMap { $0 }
         XCTAssert(group.count == 3)
@@ -45,9 +68,9 @@ final class PennyTests: XCTestCase {
             XCTAssert(Set(arr).count == 1, msg)
         }
 
-        let ids = group.compactMap { $0.id }
-        XCTAssert(ids.count == group.count, "missing at least one penny id")
-        assertAllEqual(ids, "penny ids didn't match")
+        let groupIds = group.compactMap { $0.id }
+        XCTAssert(groupIds.count == group.count, "missing at least one penny id")
+        assertAllEqual(groupIds, "penny ids didn't match")
 
         let ghs = group.compactMap { $0.github }
         XCTAssert(ghs.count == group.count, "missing at least one github id")
@@ -58,46 +81,62 @@ final class PennyTests: XCTestCase {
         assertAllEqual(sls, "slack ids didn't match")
     }
 
-    private func testUserCrud(on external: ExternalUser) throws -> User? {
-        let penny = mockPenny()
+    private func testUserCrud(on external: ExternalAccount) throws -> Account? {
+        let id = external.externalId
+        let source = external.externalSource
+
+        let mint = mockVault()
 
         // MARK: Clean
-        var user = try penny.user.find(external).wait()
+        var user = try mint.accounts
+            .search(source: source, sourceId: id)
+            .wait()
         // In case it exists
-        let _ = penny.user.delete(user)
+        if let user = user {
+            let _ = mint.accounts.delete(user)
+        }
 
         // MARK: Find - Fail
-        user = try penny.user.find(external).wait()
+        user = try mint.accounts
+            .search(source: source, sourceId: id)
+            .wait()
         XCTAssert(user == nil, "found user that should NOT exist")
 
         // MARK: Create
-        user = try penny.user.create(external).wait()
+        user = try mint.accounts.create(source: source, sourceId: id).wait()
         XCTAssert(user != nil, "did NOT create user")
 
         // MARK: Find - Success
-        user = try penny.user.find(external).wait()
+        user = try mint.accounts
+            .search(source: source, sourceId: id)
+            .wait()
         XCTAssert(user != nil, "did NOT find user that SHOULD exist")
 
         return user
     }
+//
+//    func testGiveCoin() throws {
+//        let penny = mockPenny()
+//
+//        let giver = MockExternalUser.randomGitHub()
+//        let receiver = MockExternalUser.randomGitHub()
+//
+//        let _ = try penny.coins.give(to: receiver.externalId, from: giver.externalId, source: "github", reason: "I think you're great").wait()
+//
+//        let user = try penny.user.findOrCreate(receiver).wait()
+//        let coins = try penny.coins.all(for: user).wait()
+//        XCTAssert(coins.count == 1)
+//    }
+//
+//    static let allTests = [
+//        ("testUserCrud", testUserCrud),
+//        ("testGiveCoin", testGiveCoin),
+//    ]
+}
 
-    func testGiveCoin() throws {
-        let penny = mockPenny()
-
-        let giver = MockExternalUser.randomGitHub()
-        let receiver = MockExternalUser.randomGitHub()
-
-        let _ = try penny.coins.give(to: receiver.externalId, from: giver.externalId, source: "github", reason: "I think you're great").wait()
-
-        let user = try penny.user.findOrCreate(receiver).wait()
-        let coins = try penny.coins.all(for: user).wait()
-        XCTAssert(coins.count == 1)
-    }
-
-    static let allTests = [
-        ("testUserCrud", testUserCrud),
-        ("testGiveCoin", testGiveCoin),
-    ]
+func mockVault() -> Mint.Vault {
+    let req = Request(using: app)
+    return Mint.Vault(req)
 }
 
 func mockPenny() -> Mint.Bot {
@@ -110,7 +149,10 @@ let app: Application = {
     var env = try! Environment.detect()
     var services = Services.default()
 
-    try! App.configure(&config, &env, &services)
+    let provider = MintProvider()
+    try! provider.register(&services)
+
+//    try! App.configure(&config, &env, &services)
 
     let app = try! Application(
         config: config,
@@ -118,28 +160,26 @@ let app: Application = {
         services: services
     )
 
-    try! App.boot(app)
+//    try! App.boot(app)
 
     return app
 }()
 
-typealias MXE = MockExternalUser
-
-struct MockExternalUser: ExternalUser {
+struct MockExternalAccount: ExternalAccount {
     let externalId: String
     let externalSource: String
 
-    static func randomGitHub() -> MockExternalUser {
+    static func randomGitHub() -> MockExternalAccount {
         let int = try! OSRandom().generate(Int.self)
-        return MockExternalUser(
+        return MockExternalAccount(
             externalId: int.description,
             externalSource: "github"
         )
     }
 
-    static func randomSlack() -> MockExternalUser {
+    static func randomSlack() -> MockExternalAccount {
         let uuid = UUID().uuidString
-        return MockExternalUser(
+        return MockExternalAccount(
             externalId: uuid,
             externalSource: "slack"
         )

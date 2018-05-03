@@ -11,7 +11,8 @@ public func configure(
     _ services: inout Services
 ) throws {
     /// Register providers first
-    try services.register(FluentPostgreSQLProvider())
+    /// provides database access to the mint
+    try services.register(MintProvider())
 
     /// Register routes to the router
     let router = EngineRouter.default()
@@ -20,37 +21,8 @@ public func configure(
 
     /// Register middleware
     var middlewares = MiddlewareConfig() // Create _empty_ middleware config
-    /// middlewares.use(FileMiddleware.self) // Serves files from `Public/` directory
+    middlewares.use(FileMiddleware.self) // Serves files from `Public/` directory
     middlewares.use(DateMiddleware.self) // Adds `Date` header to responses
     middlewares.use(ErrorMiddleware.self) // Catches errors and converts to HTTP response
     services.register(middlewares)
-
-    // Configure a Postgres database
-    var databases = DatabaseConfig()
-    let hostname = Environment.get("DATABASE_HOSTNAME") ?? "localhost"
-    let username = Environment.get("DATABASE_USER") ?? "vapor"
-    let databaseName = Environment.get("DATABASE_DB") ?? "vapor"
-    let password = Environment.get("DATABASE_PASSWORD") ?? "password"
-    let databaseConfig = PostgreSQLDatabaseConfig(
-        hostname: hostname,
-        username: username,
-        database: databaseName,
-        password: password
-    )
-    let postgres = PostgreSQLDatabase(config: databaseConfig)
-    databases.add(database: postgres, as: .psql)
-    services.register(databases)
-
-    /// Configure migrations
-    var migrations = MigrationConfig()
-    migrations.add(model: Coin.self, database: .psql)
-    migrations.add(model: PennyUser.self, database: .psql)
-    migrations.add(model: Mint.User.self, database: .psql)
-    migrations.add(model: Mint.Coin.self, database: .psql)
-    migrations.add(model: AccountLinkRequest.self, database: .psql)
-    services.register(migrations)
-
-    var commandConfig = CommandConfig.default()
-    commandConfig.use(RevertCommand.self, as: "revert")
-    services.register(commandConfig)
 }

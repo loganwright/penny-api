@@ -2,4 +2,5 @@
 struct Sauce {
     static let slack = "slack"
     static let github = "github"
+    static let discord = "discord"
 }

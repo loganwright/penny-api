@@ -24,14 +24,19 @@ public final class MintProvider: Provider {
 
         /// Configure migrations
         var migrations = MigrationConfig()
-        migrations.add(model: Coin.self, database: .psql)
+//        migrations.add(model: Coin.self, database: .psql)
         //    migrations.add(model: PennyUser.self, database: .psql)
         migrations.add(model: Mint.User.self, database: .psql)
         migrations.add(model: Mint.Coin.self, database: .psql)
-        print("\n\n\n\n\n******* MIGRATE ACCOUNT LINK REQUETS *******\n\n\n\n\n")
-        //    migrations.add(model: AccountLinkRequest.self, database: .psql)
-        services.register(migrations)
+        migrations.add(model: Mint.Account.self, database: .psql)
         
+        print("\n\n\n\n\n******* MIGRATE ACCOUNT LINK REQUETS *******\n\n\n\n\n")
+//            migrations.add(model: AccountLinkRequest.self, database: .psql)
+        services.register(migrations)
+
+        var commandConfig = CommandConfig.default()
+        commandConfig.use(RevertCommand.self, as: "revert")
+        services.register(commandConfig)
     }
 
     /// See `Provider.boot(_:)`
