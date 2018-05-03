@@ -11,6 +11,11 @@ let authorizedTokens: [String] = [
     "12345"
 ]
 
+struct CoinResponse: Content {
+    let coin: Coin
+    let total: Int
+}
+
 import Foundation
 
 struct PennyAuthMiddleware: Middleware {
@@ -38,10 +43,21 @@ public func pennyapi(_ open: Router) throws {
     }
 
     secure.get("secure") { _ in "authorized" }
+    secure.post("secure") { req -> String in
+        struct Foo: Content {
+            let a: String
+            let b: String
+        }
+        let body = try req.content.decode(Foo.self)
+        print(body)
+        return "authorized"
+    }
 
     // MARK: Coins
 
-    open.get("coins") { Coin.query(on: $0).all() } // TODO: Remove in production
+    open.get("coins") {
+        Coin.query(on: $0).all()
+    } // TODO: Remove in production
 
     open.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
         let source = try req.parameters.next(String.self)
@@ -60,7 +76,7 @@ public func pennyapi(_ open: Router) throws {
         return user.flatMap(to: [Coin].self, mint.coins.all)
     }
 
-    secure.post("coins") { request -> Future<[Coin]> in
+    secure.post("coins") { request -> Future<[CoinResponse]> in
         struct Package: Content {
             let from: String
             let to: String
@@ -72,11 +88,70 @@ public func pennyapi(_ open: Router) throws {
 
         let vault = Vault(request)
 
-        let pkg = try request.content.decode(Package.self)
-        let coin = pkg.flatMap(to: Coin.self) { pkg in
-            vault.coins.give(to: pkg.to, from: pkg.from, source: pkg.source, reason: pkg.reason, value: pkg.value)
+        let pkgs = try request.content.decode([Package].self)
+        let coins = pkgs.flatMap(to: [Coin].self) { pkgs in
+            return pkgs.map { pkg in
+                vault.coins.give(to: pkg.to, from: pkg.from, source: pkg.source, reason: pkg.reason, value: pkg.value)
+            }.flatten(on: request)
         }
-        return vault.coins.all(for: coin)
+
+        let pairs = coins.map(to: [(coin: Coin, total: Future<Int>)].self) { coins in
+            return try coins.map { coin in
+                return (coin, try vault.coins.total(source: coin.source, sourceId: coin.to))
+            }
+        }
+
+        return pairs.flatMap(to: [CoinResponse].self) { pairs in
+            return pairs.map { pair in
+                return pair.total.map(to: CoinResponse.self) { total in
+                    return CoinResponse(coin: pair.coin, total: total)
+                }
+            } .flatten(on: request)
+        }
+//        let _ = coins.flatMap(to: [CoinResponse].self) { coins in
+//
+//            fatalError()
+//        }
+//
+//        return coins.flatMap(to: [CoinResponse].self) { coins in
+//            let totals = try coins.map { coin in
+//                return (coin, try vault.coins.total(source: coin.source, sourceId: coin.to))
+//            }
+//            totals.flatMap(to: [CoinResponse].self) { pair in
+//                pair.1.flatMap
+//                fatalError()
+//            }
+//                fatalError()
+////            return try vault.coins.total(source: coin.source, sourceId: coin.to).map { total in
+////                return CoinResponse(coin: coin, total: total)
+////            }
+//        }
+
+//        let coins = pkgs.map { pkg in
+//            vault.coins.give(to: pkg.to, from: pkg.from, source: pkg.source, reason: pkg.reason, value: pkg.value)
+//        }
+//        let flat = coins.flatten(on: request)
+
+//        let pkg = try request.content.decode(Package.self)
+//        let coin = pkg.flatMap(to: Coin.self) { pkg in
+//            vault.coins.give(to: pkg.to, from: pkg.from, source: pkg.source, reason: pkg.reason, value: pkg.value)
+//        }
+//        return coin.flatMap(to: CoinResponse.self) { coin in
+//            return try vault.coins.total(source: coin.source, sourceId: coin.to).map { total in
+//                return CoinResponse(coin: coin, total: total)
+//            }
+//        }
+    }
+
+    secure.get("coins", "total") { req -> Future<Int> in
+        struct Package: Codable {
+            let id: String
+            let source: String
+        }
+        return try req.content.decode(Package.self).flatMap(to: Int.self) { pkg in
+            let vault = Vault(req)
+            return try vault.coins.total(source: pkg.source, sourceId: pkg.id)
+        }
     }
 
     // MARK: Accounts

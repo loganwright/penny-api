@@ -43,6 +43,13 @@ public struct CoinAccess {
         return try all(source: coin.source, sourceId: coin.to)
     }
 
+    // TODO: Optimize
+    public func total(source: String, sourceId: String) throws -> Future<Int> {
+        return try all(source: source, sourceId: sourceId).map(to: Int.self) { coins in
+            return coins.map { $0.value } .reduce(0, +)
+        }
+    }
+
     public func give(to: String, from: String, source: String, reason: String, value: Int? = nil) -> Future<Coin> {
         let coin = Coin(
             source: source,
