@@ -4,9 +4,9 @@ import FluentPostgreSQL
 
 /// Access User Account Data
 public struct AccountAccess {
-    public let worker: DatabaseWorker
+    let worker: DatabaseWorker
 
-    public init(_ worker: DatabaseWorker) {
+    init(_ worker: DatabaseWorker) {
         self.worker = worker
     }
 

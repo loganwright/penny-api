@@ -7,7 +7,7 @@ public struct CoinAccess {
 
     let worker: DatabaseWorker
 
-    public init(_ worker: DatabaseWorker) {
+    init(_ worker: DatabaseWorker) {
         self.worker = worker
     }
 

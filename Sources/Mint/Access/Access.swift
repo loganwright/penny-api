@@ -9,6 +9,7 @@ public struct Vault {
     // Account Accessor
     let accounts: AccountAccess
     let coins: CoinAccess
+    let linkRequests: LinkRequestAccess
 
     // Worker
     let worker: DatabaseWorker
@@ -17,5 +18,6 @@ public struct Vault {
         self.worker = worker
         self.accounts = AccountAccess(worker)
         self.coins = CoinAccess(worker)
+        self.linkRequests = LinkRequestAccess(worker)
     }
 }

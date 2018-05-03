@@ -1,4 +1,3 @@
-import Dispatch
 import XCTest
 
 import Vapor
@@ -7,7 +6,6 @@ import Random
 @testable import Mint
 
 final class PennyTests: XCTestCase {
-
     func testUserCrud() throws {
         // MARK: GitHub
         let ghe = MockExternalAccount.randomGitHub()
@@ -119,9 +117,29 @@ final class PennyTests: XCTestCase {
         XCTAssert(coins.count == 1)
     }
 
+    func testLinkRequest() throws {
+        let gh = MockExternalAccount.randomGitHub()
+        let sl = MockExternalAccount.randomSlack()
+
+        let vault = mockVault()
+        let created = try vault.linkRequests.create(initiator: sl, requested: gh, reference: "19").wait()
+        let found = try vault.linkRequests.find(requested: gh, reference: "19").wait()
+        XCTAssertNotNil(found)
+        XCTAssertEqual(created.id, found?.id)
+
+        let approved = try vault.linkRequests.approve(found!).wait()
+        XCTAssertEqual(approved.slack, sl.externalId)
+        XCTAssertEqual(approved.github, gh.externalId)
+
+        let gone = try vault.linkRequests.find(requested: gh, reference: "19").wait()
+        XCTAssertNil(gone)
+        print("")
+    }
+
     static let allTests = [
         ("testUserCrud", testUserCrud),
         ("testGiveCoin", testGiveCoin),
+        ("testLinkRequest", testLinkRequest),
     ]
 }
 

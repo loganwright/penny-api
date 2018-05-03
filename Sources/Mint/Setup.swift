@@ -29,6 +29,7 @@ public final class MintProvider: Provider {
         migrations.add(model: Mint.User.self, database: .psql)
         migrations.add(model: Mint.Coin.self, database: .psql)
         migrations.add(model: Mint.Account.self, database: .psql)
+        migrations.add(model: Mint.AccountLinkRequest.self, database: .psql)
         
         print("\n\n\n\n\n******* MIGRATE ACCOUNT LINK REQUETS *******\n\n\n\n\n")
 //            migrations.add(model: AccountLinkRequest.self, database: .psql)
