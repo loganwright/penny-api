@@ -143,15 +143,18 @@ public func pennyapi(_ open: Router) throws {
 //        }
     }
 
-    secure.get("coins", "total") { req -> Future<Int> in
+    struct TotalResponse: Content {
+        let total: Int
+    }
+    secure.get("coins", "total") { req -> Future<TotalResponse> in
         struct Package: Codable {
             let id: String
             let source: String
         }
-        return try req.content.decode(Package.self).flatMap(to: Int.self) { pkg in
-            let vault = Vault(req)
-            return try vault.coins.total(source: pkg.source, sourceId: pkg.id)
-        }
+        print("GOt request: \(req)")
+        let pkg = try req.query.decode(Package.self)
+        let vault = Vault(req)
+        return try vault.coins.total(source: pkg.source, sourceId: pkg.id).map(TotalResponse.init)
     }
 
     // MARK: Accounts
@@ -226,5 +229,101 @@ public func pennyapi(_ open: Router) throws {
 
         let vault = Vault(req)
         return link.flatMap(to: Account.self, vault.linkRequests.approve)
+    }
+
+    // Submit GitHub Link Request
+    secure.post("links", "github") { req -> Future<GitHubLinkResponse> in
+        let pkg = try req.content.decode(GitHubLinkInput.self)
+        return pkg.flatMap(to: GitHubLinkResponse.self) { pkg in
+            return try GitHubLinkWorker.linkGitHub(on: req, with: pkg)
+        }
+    }
+}
+
+struct GitHubLinkResponse: Content {
+    let message: String
+    let linkRequest: AccountLinkRequest
+}
+
+struct GitHubLinkInput: Content {
+    let githubUsername: String
+    let source: String
+    let id: String
+    let username: String
+}
+
+final class GitHubLinkWorker {
+    private let worker: DatabaseWorker
+    private let github: GitHub.API
+    private let vault: Vault
+
+    private let input: GitHubLinkInput
+
+    private init(
+        _ worker: DatabaseWorker,
+        input: GitHubLinkInput
+    ) {
+        self.worker = worker
+        self.github = .init(worker)
+        self.vault = .init(worker)
+
+        self.input = input
+    }
+
+    private func run() throws -> Future<GitHubLinkResponse> {
+        let issue = try postGitHubIssue()
+        let user = try githubUser()
+        return issue.and(user).flatMap(to: GitHubLinkResponse.self, makeLinkRequest)
+    }
+
+    private func postGitHubIssue() throws -> Future<GitHub.Issue> {
+        var verification = "Hey there, @\(input.githubUsername), "
+        verification += "\(input.username) from \(input.source), wants to link this GitHub account."
+        verification += "\n\n"
+        verification += "Continue:\n"
+        verification += "Comment on this issue with the word, `verify`."
+        verification += "\n\n"
+        verification += "**THAT'S NOT ME!**\n"
+        verification += "Comment on this issue with the word, `fraud`."
+        verification += "\n\n"
+        verification += "Something Else:\n"
+        verification += "Type anything else to close this issue."
+
+        return try github.postIssue(
+            user: "penny-coin",
+            repo: "validation",
+            title: "Verifying: \(input.githubUsername)",
+            body: verification
+        )
+    }
+
+    private func githubUser() throws -> Future<GitHub.User> {
+        return try github.user(login: input.githubUsername)
+    }
+
+    private func makeLinkRequest(issue: GitHub.Issue, user: GitHub.User) throws -> Future<GitHubLinkResponse> {
+        let link = try vault.linkRequests.create(
+            initiationSource: input.source,
+            initiationId: input.id,
+            requestedSource: user.externalSource,
+            requestedId: user.externalId,
+            reference: issue.id.description
+        )
+
+        let msg = makeMessage(issue: issue)
+        return link.map { GitHubLinkResponse(message: msg, linkRequest: $0) }
+    }
+
+    private func makeMessage(issue: GitHub.Issue) -> String {
+        return "Visit \(issue.html_url) to connect your GitHub account."
+    }
+
+    static func linkGitHub(on worker: DatabaseWorker, with input: GitHubLinkInput) throws -> Future<GitHubLinkResponse> {
+        let worker = self.init(
+            worker,
+            input: input
+        )
+        return try worker.run()
+
     }
 }
