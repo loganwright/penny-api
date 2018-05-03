@@ -6,7 +6,7 @@ public typealias DatabaseWorker = Container & DatabaseConnectable
 extension String: Error {}
 
 public struct Vault {
-
+    // Account Accessor
     let accounts: AccountAccess
 
     // Worker
@@ -15,21 +15,6 @@ public struct Vault {
     public init(_ worker: DatabaseWorker) {
         self.worker = worker
         self.accounts = AccountAccess(worker)
-    }
-}
-
-public struct Access {
-    // Accessors
-    public let user: UserAccess
-    public let coins: Bot.CoinAccess
-
-    // Worker
-    let worker: DatabaseWorker
-
-    public init(_ worker: Container & DatabaseConnectable) {
-        self.worker = worker
-        self.user = .init(worker)
-        self.coins = .init(worker: worker)
     }
 }
 

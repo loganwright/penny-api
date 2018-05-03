@@ -1,34 +1,17 @@
-
+import Vapor
 import FluentPostgreSQL
 import Foundation
-import Vapor
 
-//////////
-
-
-
-public class Accessor {
-    public let worker: DatabaseWorker
-
-    public init(_ worker: DatabaseWorker) {
-        self.worker = worker
-    }
-}
-
-public final class User: Codable {
+/// An account associated with the Mint.
+public final class Account: Codable {
     public var id: UUID?
 
+    // Supported external identifiers
     public var slack: String?
     public var github: String?
     public var discord: String?
-    // more in future
 
-    public init(slack: String?, github: String?, discord: String?) {
-        self.slack = slack
-        self.github = github
-        self.discord = discord
-    }
-
+    /// [SOURCE: ID]
     public var sources: [String : String] {
         var list = [String : String]()
         if let slack = slack {
@@ -42,9 +25,15 @@ public final class User: Codable {
         }
         return list
     }
+
+    public init(slack: String?, github: String?, discord: String?) {
+        self.slack = slack
+        self.github = github
+        self.discord = discord
+    }
 }
 
-extension User {
+extension Account {
     convenience init(_ dict: [String: String]) {
         self.init(
             slack: dict[Sauce.slack],
@@ -54,8 +43,7 @@ extension User {
     }
 }
 
-extension User: PostgreSQLUUIDModel {}
-extension User: Content {}
-extension User: Migration {}
-extension User: Parameter {}
-
+extension Account: PostgreSQLUUIDModel {}
+extension Account: Content {}
+extension Account: Migration {}
+extension Account: Parameter {}
