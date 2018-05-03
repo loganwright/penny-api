@@ -6,4 +6,6 @@ public func routes(_ router: Router) throws {
     router.get("status") { req in
         return "Alive and well: \(Date())"
     }
+
+    try pennyapi(router)
 }

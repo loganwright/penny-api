@@ -7,9 +7,9 @@ extension String: Error {}
 
 public struct Vault {
     // Account Accessor
-    let accounts: AccountAccess
-    let coins: CoinAccess
-    let linkRequests: LinkRequestAccess
+    public let accounts: AccountAccess
+    public let coins: CoinAccess
+    public let linkRequests: LinkRequestAccess
 
     // Worker
     let worker: DatabaseWorker

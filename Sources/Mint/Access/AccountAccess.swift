@@ -49,11 +49,11 @@ public struct AccountAccess {
 
     // MARK: Combine Accounts
 
-    public func combine(_ users: [ExternalAccount]) throws -> Future<Account> {
+    internal func combine(_ users: [ExternalAccount]) throws -> Future<Account> {
         return try users.map(get).flatten(on: worker).flatMap(to: Account.self, combine)
     }
 
-    public func combine(_ accounts: [Account]) throws -> Future<Account> {
+    internal func combine(_ accounts: [Account]) throws -> Future<Account> {
         // Must run first to avoid accidental deletes
         // accidental deletes won't lose coin records
         let sources = try accounts.combinedSources()

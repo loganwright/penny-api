@@ -7,11 +7,11 @@ public final class AccountLinkRequest: Codable {
 
     public var created: Date
 
-    public var initiationId: String
     public var initiationSource: String
+    public var initiationId: String
 
-    public var requestedId: String
     public var requestedSource: String
+    public var requestedId: String
 
     public var reference: String
 

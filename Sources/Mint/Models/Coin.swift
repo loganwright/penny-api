@@ -19,7 +19,7 @@ public final class Coin: Codable {
     public let from: String
 
     /// An indication of the reason to possibly begin categorizing more
-    public let reason: String?
+    public let reason: String
 
     /// The value of a given coin, for potentially allowing more coins in future
     public let value: Int
@@ -34,7 +34,7 @@ public final class Coin: Codable {
         source: String,
         to: String,
         from: String,
-        reason: String?,
+        reason: String,
         value: Int = 1,
         createdAt: Date? = nil,
         meta: String? = nil

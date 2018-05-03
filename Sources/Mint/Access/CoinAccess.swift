@@ -11,13 +11,17 @@ public struct CoinAccess {
         self.worker = worker
     }
 
+    public func all(for account: ExternalAccount) throws -> Future<[Coin]> {
+        return try all(source: account.externalSource, sourceId: account.externalId)
+    }
+
     public func all(source: String, sourceId: String) throws -> Future<[Coin]> {
         let access = AccountAccess(worker)
         let account = try access.get(source: source, sourceId: sourceId)
-        return try all(for: account)
+        return all(for: account)
     }
 
-    public func all(for user: Future<Account>) throws -> Future<[Coin]> {
+    public func all(for user: Future<Account>) -> Future<[Coin]> {
         return user.flatMap(to: [Coin].self, self.all)
     }
 
@@ -30,13 +34,22 @@ public struct CoinAccess {
         return query.all()
     }
 
-    public func give(to: String, from: String, source: String, reason: String, value: Int = 1) -> Future<Coin> {
+
+    public func all(for coin: Future<Coin>) -> Future<[Coin]> {
+        return coin.flatMap(to: [Coin].self, all)
+    }
+
+    public func all(for coin: Coin) throws -> Future<[Coin]> {
+        return try all(source: coin.source, sourceId: coin.to)
+    }
+
+    public func give(to: String, from: String, source: String, reason: String, value: Int? = nil) -> Future<Coin> {
         let coin = Coin(
             source: source,
             to: to,
             from: from,
             reason: reason,
-            value: value,
+            value: value ?? 1,
             createdAt: Date()
         )
 
@@ -48,7 +61,6 @@ public struct CoinAccess {
     }
 
     // MARK: Source Filter, To Improve
-
     private func sourceFilter(source: String, id: String) throws -> QueryFilterItem<PostgreSQLDatabase> {
         // TODO: Improve w/ fancy filter stuff
         let sourceFilter = try QueryFilter<PostgreSQLDatabase>(
