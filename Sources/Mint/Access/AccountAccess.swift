@@ -9,9 +9,9 @@ public struct AccountAccess {
     public init(_ worker: DatabaseWorker) {
         self.worker = worker
     }
-}
 
-extension AccountAccess {
+    // MARK: Get
+
     public func get(_ account: ExternalAccount) throws -> Future<Account> {
         return try get(source: account.externalSource, sourceId: account.externalId)
     }
@@ -23,6 +23,8 @@ extension AccountAccess {
             return try self.create(source: source, sourceId: sourceId)
         }
     }
+
+    // MARK: Search
 
     internal func search(source: String, sourceId: String) throws -> Future<Account?> {
         let filter = try QueryFilter<PostgreSQLDatabase>(
@@ -37,14 +39,16 @@ extension AccountAccess {
         return query.first()
     }
 
+    // MARK: Create
+
     internal func create(source: String, sourceId: String) throws -> Future<Account> {
         let account = Account([source: sourceId])
         guard account.sources[source] == sourceId else { throw "This source is currently unsupported: \(source)" }
         return account.save(on: worker)
     }
-}
 
-extension AccountAccess {
+    // MARK: Combine Accounts
+
     public func combine(_ users: [ExternalAccount]) throws -> Future<Account> {
         return try users.map(get).flatten(on: worker).flatMap(to: Account.self, combine)
     }
@@ -52,22 +56,24 @@ extension AccountAccess {
     public func combine(_ accounts: [Account]) throws -> Future<Account> {
         // Must run first to avoid accidental deletes
         // accidental deletes won't lose coin records
-        let sources = try! accounts.combinedSources()
-        let del = try! delete(accounts)
+        let sources = try accounts.combinedSources()
+        let del = try delete(accounts)
         return del.then { _ in return Account(sources).save(on: self.worker) }
     }
 
-    func delete(_ account: Account) -> Future<Void> {
+    // MARK: Delete Accounts
+
+    internal func delete(_ account: Account) -> Future<Void> {
         return account.delete(on: worker)
     }
 
-    func delete(_ accounts: [Account]) throws -> Future<Void> {
+    internal func delete(_ accounts: [Account]) throws -> Future<Void> {
         let ids = accounts.compactMap { $0.id }
         let query = try fetchQuery(ids: ids)
         return query.delete()
     }
 
-    func fetchQuery(ids: [UUID]) throws -> QueryBuilder<Account, Account> {
+    internal func fetchQuery(ids: [UUID]) throws -> QueryBuilder<Account, Account> {
         return try Account.query(on: worker).filter(\.id ~~ ids)
     }
 }

@@ -8,22 +8,11 @@ import Random
 
 final class PennyTests: XCTestCase {
 
-//    func testAccount() throws {
-//        let worker = Request(using: app)
-//        let one = try saveExternal(source: "github", id: "932198", on: worker).wait()
-//        print(one)
-//        print("")
-//
-//        let all = try allExternals(on: worker).wait()
-//        print(all)
-//        print("")
-//    }
-//
     func testUserCrud() throws {
         // MARK: GitHub
         let ghe = MockExternalAccount.randomGitHub()
-        let github = try! testUserCrud(on: ghe)
-//        XCTAssertEqual(github?.github, ghe.externalId)
+        let github = try testUserCrud(on: ghe)
+        XCTAssertEqual(github?.github, ghe.externalId)
 
         // MARK: Slack
         let sle = MockExternalAccount.randomSlack()
@@ -114,24 +103,26 @@ final class PennyTests: XCTestCase {
 
         return user
     }
-//
-//    func testGiveCoin() throws {
-//        let penny = mockPenny()
-//
-//        let giver = MockExternalUser.randomGitHub()
-//        let receiver = MockExternalUser.randomGitHub()
-//
-//        let _ = try penny.coins.give(to: receiver.externalId, from: giver.externalId, source: "github", reason: "I think you're great").wait()
-//
-//        let user = try penny.user.findOrCreate(receiver).wait()
-//        let coins = try penny.coins.all(for: user).wait()
-//        XCTAssert(coins.count == 1)
-//    }
-//
-//    static let allTests = [
-//        ("testUserCrud", testUserCrud),
-//        ("testGiveCoin", testGiveCoin),
-//    ]
+
+    func testGiveCoin() throws {
+        let mint = mockVault()
+
+        let giver = MockExternalAccount.randomGitHub()
+        let receiver = MockExternalAccount.randomGitHub()
+
+        let _ = try mint.coins.give(to: receiver.externalId, from: giver.externalId, source: "github", reason: "I think you're great").wait()
+
+        let user = try mint.accounts.get(receiver).wait()
+        let coins = try mint.coins.all(for: user).wait()
+        print(coins)
+        print("")
+        XCTAssert(coins.count == 1)
+    }
+
+    static let allTests = [
+        ("testUserCrud", testUserCrud),
+        ("testGiveCoin", testGiveCoin),
+    ]
 }
 
 func mockVault() -> Mint.Vault {
@@ -152,15 +143,11 @@ let app: Application = {
     let provider = MintProvider()
     try! provider.register(&services)
 
-//    try! App.configure(&config, &env, &services)
-
     let app = try! Application(
         config: config,
         environment: env,
         services: services
     )
-
-//    try! App.boot(app)
 
     return app
 }()
