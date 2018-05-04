@@ -5,7 +5,7 @@ import Crypto
 import Random
 @testable import Mint
 
-final class PennyTests: XCTestCase {
+final class VaultTests: XCTestCase {
     func testUserCrud() throws {
         // MARK: GitHub
         let ghe = MockExternalAccount.randomGitHub()
@@ -146,11 +146,6 @@ final class PennyTests: XCTestCase {
 func mockVault() -> Mint.Vault {
     let req = Request(using: app)
     return Mint.Vault(req)
-}
-
-func mockPenny() -> Mint.Bot {
-    let response = Request(using: app)
-    return Mint.Bot(response)
 }
 
 let app: Application = {
