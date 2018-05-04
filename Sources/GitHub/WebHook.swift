@@ -4,9 +4,6 @@ import Crypto
 public struct WebHook {
     public struct Payload: Content {
         public var action: String
-//        public struct Issue: Content {
-//            public var number: Int
-//        }
         public var issue: Issue?
         public var repository: Repo?
         public var pull_request: PullRequest?

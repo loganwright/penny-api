@@ -1,35 +1,20 @@
 import Vapor
 
-// TODO: Must Hide w/ Key
-// Generate a new token, and use ENV_VAR
-// Generate a new secret, and use ENV_VAR
-let ghtoken = "a3047d12ec84a96f58605df720fbda3d41f698dd"
-let secret = "foo-bar"
-
-
 let baseUrl = "https://api.github.com"
 
-let baseHeaders = HTTPHeaders([
-    ("Authorization", "Bearer \(ghtoken)"),
-    ("Accept", "application/vnd.github.v3+json"),
-])
-
-extension Container {
-    func client() throws -> Client {
-        return try make(Client.self)
-    }
-}
-
-extension Future where T == Response {
-    public func become<C: Content>(_ type: C.Type = C.self) -> Future<C> {
-        return flatMap(to: C.self) { result in return try result.content.decode(C.self) }
-    }
-}
-
 public struct Network {
-    public let worker: Container
-    public init(_ worker: Container) {
+    let worker: Container
+    let token: String
+
+    let baseHeaders: HTTPHeaders
+
+    public init(_ worker: Container, token: String) {
         self.worker = worker
+        self.token = token
+        self.baseHeaders = HTTPHeaders([
+            ("Authorization", "Bearer \(self.token)"),
+            ("Accept", "application/vnd.github.v3+json"),
+        ])
     }
 
     public func postComment(to commentable: Commentable, _ body: String) throws -> Future<Response> {
@@ -39,15 +24,23 @@ public struct Network {
 
         let commentsUrl = commentable.comments_url
         let comment = Comment(body: body)
-        let client = try worker.make(Client.self)
+
+        let client = try worker.client()
         return client.post(commentsUrl, headers: baseHeaders, content: comment)
     }
 
     public func user(login: String) throws -> Future<User> {
-        return try User.fetch(with: worker, forUsername: login)
+        let url = "\(baseUrl)/users/\(login)"
+        return try user(url: url)
     }
+
     public func user(id: String) throws -> Future<User> {
-        return try User.fetch(with: worker, forId: id)
+        let url = "\(GitHub.baseUrl)/user/\(id)"
+        return try user(url: url)
+    }
+
+    private func user(url: String) throws -> Future<User> {
+        return try worker.client().get(url, headers: baseHeaders).become()
     }
 
     public func close(_ issue: Issue) throws -> Future<Issue> {
@@ -73,18 +66,19 @@ extension Network {
         }
 
         let post = Post(title: title, body: body, labels: ["validate"], assignees: [])
-        let client = try worker.make(Client.self)
+        let client = try worker.client()
         return client.post(issueUrl, headers: baseHeaders, content: post).become()
     }
 }
 
-public func postComment(with worker: Container, to commentable: Commentable, _ body: String) throws -> Future<Response> {
-    struct Comment: Content {
-        let body: String
+extension Container {
+    func client() throws -> Client {
+        return try make(Client.self)
     }
+}
 
-    let commentsUrl = commentable.comments_url
-    let comment = Comment(body: body)
-    let client = try worker.make(Client.self)
-    return client.post(commentsUrl, headers: baseHeaders, content: comment)
+extension Future where T == Response {
+    public func become<C: Content>(_ type: C.Type = C.self) -> Future<C> {
+        return flatMap(to: C.self) { result in return try result.content.decode(C.self) }
+    }
 }

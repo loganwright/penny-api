@@ -6,10 +6,13 @@ import Crypto
 
 struct WebHookRunner {
     let worker: DatabaseWorker
+    let githubToken: String
+
     private var ok: Future<HTTPStatus> { return Future.map(on: worker) { .ok } }
 
-    init(_ worker: DatabaseWorker) {
+    init(_ worker: DatabaseWorker, githubToken: String) {
         self.worker = worker
+        self.githubToken = githubToken
     }
 
     func handlePullRequest(_ webhook: WebHook) throws -> Future<HTTPStatus> {
@@ -35,7 +38,7 @@ struct WebHookRunner {
         let total = new.flatMap(to: Int.self) { _ in try vault.coins.total(source: source, sourceId: to) }
         let message = total.map(makeMessage)
 
-        let github = GitHub.Network(worker)
+        let github = GitHub.Network(worker, token: githubToken)
         let comment = message.flatMap(to: Response.self) { message in
             return try github.postComment(to: pr, message)
         }

@@ -2,6 +2,13 @@ import Routing
 import Vapor
 import GitHub
 
+// TODO: Must Hide w/ Key
+// Generate a new token, and use ENV_VAR
+// Generate a new secret, and use ENV_VAR
+let PENNY_GITHUB_TOKEN = Environment.get("PENNY_GITHUB_TOKEN")!
+
+let secret = "foo-bar"
+
 public func routes(_ router: Router) throws {
     // I always keep a status check
     router.get("status") { req in
@@ -11,7 +18,7 @@ public func routes(_ router: Router) throws {
     // GitHub General Listening
     router.post("gh-webhook") { req -> Future<HTTPStatus> in
         let hook = try req.webhook(secret: "foo-bar")
-        let runner = WebHookRunner(req)
+        let runner = WebHookRunner(req, githubToken: PENNY_GITHUB_TOKEN)
         return hook.flatMap(to: HTTPStatus.self, runner.handlePullRequest)
     }
     // GitHub Account Linking
@@ -56,7 +63,7 @@ func githubAccountLinkHook(req: Request) throws -> Future<HTTPStatus> {
             print("Fraud alert!")
             return Future.map(on: req) { .ok }
         } else if body != "verify" {
-            let github = GitHub.Network(req)
+            let github = GitHub.Network(req, token: PENNY_GITHUB_TOKEN)
             return try github.close(issue).then { _ in return Future.map(on: req) { .ok } }
         }
 
@@ -80,7 +87,7 @@ func githubAccountLinkHook(req: Request) throws -> Future<HTTPStatus> {
 
         return total.flatMap(to: HTTPStatus.self) { total in
             let message = "Have a coin for linking your GitHub! You now have \(total) coins."
-            let github = GitHub.Network(req)
+            let github = GitHub.Network(req, token: PENNY_GITHUB_TOKEN)
             let comment = try github.postComment(to: issue, message)
             return comment.flatMap(to: HTTPStatus.self) { resp in
                 return try github.close(issue).flatMap(to: HTTPStatus.self) { _ in return Future.map(on: req) { .ok } }

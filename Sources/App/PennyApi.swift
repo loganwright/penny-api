@@ -62,7 +62,7 @@ public func pennyapi(_ open: Router) throws {
 
     open.get("coins", "github-username", String.parameter) { req -> Future<[Coin]> in
         let username = try req.parameters.next(String.self)
-        let github = GitHub.Network(req)
+        let github = GitHub.Network(req, token: PENNY_GITHUB_TOKEN)
         let user = try github.user(login: username)
 
         let mint = Vault(req)
@@ -224,7 +224,7 @@ final class GitHubLinkWorker {
         input: GitHubLinkInput
     ) {
         self.worker = worker
-        self.github = .init(worker)
+        self.github = .init(worker, token: PENNY_GITHUB_TOKEN)
         self.vault = .init(worker)
 
         self.input = input
