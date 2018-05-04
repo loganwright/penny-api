@@ -41,6 +41,12 @@ public final class MintProvider: Provider {
 }
 
 func makeDatabaseConfig() -> PostgreSQLDatabaseConfig {
+    let databaseConfig: PostgreSQLDatabaseConfig
+
+    if let url = Environment.get("DATABASE_URL") {
+        return try! PostgreSQLDatabaseConfig(url: url)
+    }
+
     let hostname = Environment.get("DATABASE_HOSTNAME") ?? "localhost"
     let username = Environment.get("DATABASE_USER") ?? "vapor"
     let databaseName = Environment.get("DATABASE_DB") ?? "vapor"
