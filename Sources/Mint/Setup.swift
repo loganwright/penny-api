@@ -41,8 +41,6 @@ public final class MintProvider: Provider {
 }
 
 func makeDatabaseConfig() -> PostgreSQLDatabaseConfig {
-    let databaseConfig: PostgreSQLDatabaseConfig
-
     if let url = Environment.get("DATABASE_URL") {
         return try! PostgreSQLDatabaseConfig(url: url)
     }
