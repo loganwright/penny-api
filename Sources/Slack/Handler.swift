@@ -25,6 +25,7 @@ struct MessageHandler {
 
         // coin parsing
         if processor.shouldGiftCoin(in: msg.text) {
+            guard msg.channel.hasPrefix("C") else { throw "public channels only" }
             let usersToGift = processor.userIdsToGift(in: msg.text, fromId: msg.user)
             try giveCoins(to: usersToGift, from: from)
         } else if msg.text.contains("<@\(MYRTLE)>") || msg.text.contains("<@\(PENNY)>") {
