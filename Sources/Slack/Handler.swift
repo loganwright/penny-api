@@ -147,7 +147,7 @@ final class GitHubLinkBuilder {
         input: GitHubLinkInput
     ) {
         self.worker = worker
-        self.github = .init(worker, token: "a3047d12ec84a96f58605df720fbda3d41f698dd")
+        self.github = .init(worker, token: Environment.get("PENNY_GITHUB_TOKEN")!)
         self.vault = .init(worker)
 
         self.input = input
