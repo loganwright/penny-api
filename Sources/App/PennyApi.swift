@@ -7,9 +7,10 @@ extension GitHub.User: Mint.ExternalAccount {
     public var externalSource: String { return "github" }
 }
 
-let authorizedTokens: [String] = [
-    "12345"
-]
+let authorizedTokens: [String] = Environment.get("AUTHORIZED__ACCESS_TOKENS")?.components(separatedBy: ",")
+    ?? [
+        "12345"
+    ]
 
 struct CoinResponse: Content {
     let coin: Coin
@@ -43,15 +44,6 @@ public func pennyapi(_ open: Router) throws {
     }
 
     secure.get("secure") { _ in "authorized" }
-    secure.post("secure") { req -> String in
-        struct Foo: Content {
-            let a: String
-            let b: String
-        }
-        let body = try req.content.decode(Foo.self)
-        print(body)
-        return "authorized"
-    }
 
     // MARK: Coins
 
@@ -108,39 +100,6 @@ public func pennyapi(_ open: Router) throws {
                 }
             } .flatten(on: request)
         }
-//        let _ = coins.flatMap(to: [CoinResponse].self) { coins in
-//
-//            fatalError()
-//        }
-//
-//        return coins.flatMap(to: [CoinResponse].self) { coins in
-//            let totals = try coins.map { coin in
-//                return (coin, try vault.coins.total(source: coin.source, sourceId: coin.to))
-//            }
-//            totals.flatMap(to: [CoinResponse].self) { pair in
-//                pair.1.flatMap
-//                fatalError()
-//            }
-//                fatalError()
-////            return try vault.coins.total(source: coin.source, sourceId: coin.to).map { total in
-////                return CoinResponse(coin: coin, total: total)
-////            }
-//        }
-
-//        let coins = pkgs.map { pkg in
-//            vault.coins.give(to: pkg.to, from: pkg.from, source: pkg.source, reason: pkg.reason, value: pkg.value)
-//        }
-//        let flat = coins.flatten(on: request)
-
-//        let pkg = try request.content.decode(Package.self)
-//        let coin = pkg.flatMap(to: Coin.self) { pkg in
-//            vault.coins.give(to: pkg.to, from: pkg.from, source: pkg.source, reason: pkg.reason, value: pkg.value)
-//        }
-//        return coin.flatMap(to: CoinResponse.self) { coin in
-//            return try vault.coins.total(source: coin.source, sourceId: coin.to).map { total in
-//                return CoinResponse(coin: coin, total: total)
-//            }
-//        }
     }
 
     struct TotalResponse: Content {
@@ -170,7 +129,7 @@ public func pennyapi(_ open: Router) throws {
     }
 
     // MARK: Links
-
+    open.get("all-links") { AccountLinkRequest.query(on: $0).all() }
     // Submit Link Request
     secure.post("links") { req -> Future<AccountLinkRequest> in
         struct Package: Content {
