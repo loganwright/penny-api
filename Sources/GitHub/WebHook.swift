@@ -7,6 +7,10 @@ public struct WebHook {
         public var issue: Issue?
         public var repository: Repo?
         public var pull_request: PullRequest?
+        public var comment: Comment?
+
+        // optional?
+        public var sender: User?
     }
 
     public let event: String

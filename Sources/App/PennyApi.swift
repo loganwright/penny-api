@@ -2,17 +2,6 @@ import Mint
 import Vapor
 import GitHub
 
-extension GitHub.User: Mint.ExternalAccount {
-    public var externalId: String { return id.description }
-    public var externalSource: String { return "github" }
-}
-
-let authorizedTokens: [String] = Environment.get("AUTHORIZED__ACCESS_TOKENS")?
-    .components(separatedBy: ",")
-    ?? [
-        "12345"
-    ]
-
 struct CoinResponse: Content {
     let coin: Coin
     let total: Int
@@ -20,39 +9,18 @@ struct CoinResponse: Content {
 
 import Foundation
 
-struct PennyAuthMiddleware: Middleware {
-    func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
-        guard
-            let token = request.http.headers["Authorization"]
-                .first?
-                .components(separatedBy: "Bearer ")
-                .last,
-            authorizedTokens.contains(token)
-            else { throw "unauthorized" }
-
-        return try next.respond(to: request)
-    }
-}
 
 public func pennyapi(_ open: Router) throws {
     // Run through basic auth verification
     let secure = open.grouped(PennyAuthMiddleware())
+    let devonly = open.grouped(DevelopmentOnlyMiddleware()).grouped("dev")
 
-    // MARK: Status
+    // MARK: Development Endpoints
 
-    open.get("status") { req in
-        return "Alive and well: \(Date())"
-    }
-
-    secure.get("secure") { _ in "authorized" }
-
-    // MARK: Coins
-
-    open.get("coins") {
-        Coin.query(on: $0).all()
-    } // TODO: Remove in production
-
-    open.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
+    devonly.get("coins") { Coin.query(on: $0).all() }
+    devonly.get("accounts") { Account.query(on: $0).all() }
+    devonly.get("links") { AccountLinkRequest.query(on: $0).all() }
+    devonly.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
         let source = try req.parameters.next(String.self)
         let id = try req.parameters.next(String.self)
 
@@ -60,14 +28,37 @@ public func pennyapi(_ open: Router) throws {
         return try mint.coins.all(source: source, sourceId: id)
     }
 
-    open.get("coins", "github-username", String.parameter) { req -> Future<[Coin]> in
+    // MARK: Secure Status
+
+    secure.get("secure") { _ in "authorized" }
+
+    // MARK: Coin Totals
+
+    struct TotalResponse: Content {
+        let total: Int
+    }
+
+    open.get("coins", String.parameter, String.parameter, "total") { req -> Future<TotalResponse> in
+        let source = try req.parameters.next(String.self)
+        let id = try req.parameters.next(String.self)
+
+        let vault = Vault(req)
+        return try vault.coins.total(source: source, sourceId: id).map(TotalResponse.init)
+    }
+
+    open.get("coins", "github-username", String.parameter, "total") { req -> Future<TotalResponse> in
         let username = try req.parameters.next(String.self)
         let github = GitHub.Network(req, token: PENNY_GITHUB_TOKEN)
         let user = try github.user(login: username)
 
-        let mint = Vault(req)
-        return user.flatMap(to: [Coin].self, mint.coins.all)
+        let vault = Vault(req)
+        let total = user.flatMap(to: Int.self) { user in
+            return try vault.coins.total(source: user.externalSource, sourceId: user.externalId)
+        }
+        return total.map(TotalResponse.init)
     }
+
+    // MARK: Post Coin
 
     secure.post("coins") { request -> Future<[CoinResponse]> in
         struct Package: Content {
@@ -103,23 +94,7 @@ public func pennyapi(_ open: Router) throws {
         }
     }
 
-    struct TotalResponse: Content {
-        let total: Int
-    }
-    secure.get("coins", "total") { req -> Future<TotalResponse> in
-        struct Package: Codable {
-            let id: String
-            let source: String
-        }
-        print("GOt request: \(req)")
-        let pkg = try req.query.decode(Package.self)
-        let vault = Vault(req)
-        return try vault.coins.total(source: pkg.source, sourceId: pkg.id).map(TotalResponse.init)
-    }
-
     // MARK: Accounts
-
-    open.get("accounts") { Account.query(on: $0).all() } // TODO: Remove in production
 
     secure.get("accounts", String.parameter, String.parameter) { req -> Future<Account> in
         let source = try req.parameters.next(String.self)
@@ -130,7 +105,15 @@ public func pennyapi(_ open: Router) throws {
     }
 
     // MARK: Links
-    open.get("all-links") { AccountLinkRequest.query(on: $0).all() }
+
+    // Submit GitHub Link Request
+    secure.post("links", "github") { req -> Future<GitHubLinkResponse> in
+        let pkg = try req.content.decode(GitHubLinkInput.self)
+        return pkg.flatMap(to: GitHubLinkResponse.self) { pkg in
+            return try GitHubLinkBuilder.linkGitHub(on: req, with: pkg)
+        }
+    }
+
     // Submit Link Request
     secure.post("links") { req -> Future<AccountLinkRequest> in
         struct Package: Content {
@@ -189,101 +172,5 @@ public func pennyapi(_ open: Router) throws {
 
         let vault = Vault(req)
         return link.flatMap(to: Account.self, vault.linkRequests.approve)
-    }
-
-    // Submit GitHub Link Request
-    secure.post("links", "github") { req -> Future<GitHubLinkResponse> in
-        let pkg = try req.content.decode(GitHubLinkInput.self)
-        return pkg.flatMap(to: GitHubLinkResponse.self) { pkg in
-            return try GitHubLinkWorker.linkGitHub(on: req, with: pkg)
-        }
-    }
-}
-
-struct GitHubLinkResponse: Content {
-    let message: String
-    let linkRequest: AccountLinkRequest
-}
-
-struct GitHubLinkInput: Content {
-    let githubUsername: String
-    let source: String
-    let id: String
-    let username: String
-}
-
-final class GitHubLinkWorker {
-    private let worker: DatabaseWorker
-    private let github: GitHub.Network
-    private let vault: Vault
-
-    private let input: GitHubLinkInput
-
-    private init(
-        _ worker: DatabaseWorker,
-        input: GitHubLinkInput
-    ) {
-        self.worker = worker
-        self.github = .init(worker, token: PENNY_GITHUB_TOKEN)
-        self.vault = .init(worker)
-
-        self.input = input
-    }
-
-    private func run() throws -> Future<GitHubLinkResponse> {
-        let issue = try postGitHubIssue()
-        let user = try githubUser()
-        return issue.and(user).flatMap(to: GitHubLinkResponse.self, makeLinkRequest)
-    }
-
-    private func postGitHubIssue() throws -> Future<GitHub.Issue> {
-        var verification = "Hey there, @\(input.githubUsername), "
-        verification += "\(input.username) from \(input.source), wants to link this GitHub account."
-        verification += "\n\n"
-        verification += "Continue:\n"
-        verification += "Comment on this issue with the word, `verify`."
-        verification += "\n\n"
-        verification += "**THAT'S NOT ME!**\n"
-        verification += "Comment on this issue with the word, `fraud`."
-        verification += "\n\n"
-        verification += "Something Else:\n"
-        verification += "Type anything else to close this issue."
-
-        return try github.postIssue(
-            user: "penny-coin",
-            repo: "validation",
-            title: "Verifying: \(input.githubUsername)",
-            body: verification
-        )
-    }
-
-    private func githubUser() throws -> Future<GitHub.User> {
-        return try github.user(login: input.githubUsername)
-    }
-
-    private func makeLinkRequest(issue: GitHub.Issue, user: GitHub.User) throws -> Future<GitHubLinkResponse> {
-        let link = try vault.linkRequests.create(
-            initiationSource: input.source,
-            initiationId: input.id,
-            requestedSource: user.externalSource,
-            requestedId: user.externalId,
-            reference: issue.id.description
-        )
-
-        let msg = makeMessage(issue: issue)
-        return link.map { GitHubLinkResponse(message: msg, linkRequest: $0) }
-    }
-
-    private func makeMessage(issue: GitHub.Issue) -> String {
-        return "Visit \(issue.html_url) to connect your GitHub account."
-    }
-
-    static func linkGitHub(on worker: DatabaseWorker, with input: GitHubLinkInput) throws -> Future<GitHubLinkResponse> {
-        let worker = self.init(
-            worker,
-            input: input
-        )
-        return try worker.run()
-
     }
 }
