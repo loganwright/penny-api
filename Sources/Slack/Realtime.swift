@@ -23,7 +23,3 @@ func loadRealtimeApi(with worker: Container, token: String) throws -> Future<Str
         return resp.map { $0.url }
     }
 }
-
-func connect(to url: String) {
-    
-}
