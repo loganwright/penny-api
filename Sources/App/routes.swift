@@ -1,5 +1,6 @@
 import Routing
 import Vapor
+import GitHub
 
 public func routes(_ router: Router) throws {
     // I always keep a status check
@@ -7,6 +8,12 @@ public func routes(_ router: Router) throws {
         return "Alive and well: \(Date())"
     }
 
+    // GitHub General Listening
+    router.post("gh-webhook") { req -> Future<HTTPStatus> in
+        let hook = try req.webhook(secret: "foo-bar")
+        let runner = WebHookRunner(req)
+        return hook.flatMap(to: HTTPStatus.self, runner.handlePullRequest)
+    }
     // GitHub Account Linking
     router.post("gh-validation-hook", use: githubAccountLinkHook)
 
@@ -49,7 +56,7 @@ func githubAccountLinkHook(req: Request) throws -> Future<HTTPStatus> {
             print("Fraud alert!")
             return Future.map(on: req) { .ok }
         } else if body != "verify" {
-            let github = GitHub.API(req)
+            let github = GitHub.Network(req)
             return try github.close(issue).then { _ in return Future.map(on: req) { .ok } }
         }
 
@@ -73,7 +80,7 @@ func githubAccountLinkHook(req: Request) throws -> Future<HTTPStatus> {
 
         return total.flatMap(to: HTTPStatus.self) { total in
             let message = "Have a coin for linking your GitHub! You now have \(total) coins."
-            let github = GitHub.API(req)
+            let github = GitHub.Network(req)
             let comment = try github.postComment(to: issue, message)
             return comment.flatMap(to: HTTPStatus.self) { resp in
                 return try github.close(issue).flatMap(to: HTTPStatus.self) { _ in return Future.map(on: req) { .ok } }

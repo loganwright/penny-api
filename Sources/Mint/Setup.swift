@@ -24,15 +24,9 @@ public final class MintProvider: Provider {
 
         /// Configure migrations
         var migrations = MigrationConfig()
-//        migrations.add(model: Coin.self, database: .psql)
-        //    migrations.add(model: PennyUser.self, database: .psql)
-        migrations.add(model: Mint.User.self, database: .psql)
         migrations.add(model: Mint.Coin.self, database: .psql)
         migrations.add(model: Mint.Account.self, database: .psql)
         migrations.add(model: Mint.AccountLinkRequest.self, database: .psql)
-        
-        print("\n\n\n\n\n******* MIGRATE ACCOUNT LINK REQUETS *******\n\n\n\n\n")
-//            migrations.add(model: AccountLinkRequest.self, database: .psql)
         services.register(migrations)
 
         var commandConfig = CommandConfig.default()
@@ -40,34 +34,10 @@ public final class MintProvider: Provider {
         services.register(commandConfig)
     }
 
-    /// See `Provider.boot(_:)`
-//    public func willBoot(_ worker: Container) throws -> Future<Void> {
-//        return .done(on: worker)
-//    }
 
-    /// See `Provider.boot(_:)`
     public func didBoot(_ worker: Container) throws -> Future<Void> {
         return .done(on: worker)
     }
-}
-
-func setup(services: inout Services) {
-    let databaseConfig = makeDatabaseConfig()
-    let postgres = PostgreSQLDatabase(config: databaseConfig)
-
-    var databases = DatabaseConfig()
-    databases.add(database: postgres, as: .psql)
-    services.register(databases)
-
-    /// Configure migrations
-    var migrations = MigrationConfig()
-    migrations.add(model: Coin.self, database: .psql)
-//    migrations.add(model: PennyUser.self, database: .psql)
-    migrations.add(model: Mint.User.self, database: .psql)
-    migrations.add(model: Mint.Coin.self, database: .psql)
-    print("\n\n\n\n\n******* MIGRATE ACCOUNT LINK REQUETS *******\n\n\n\n\n")
-//    migrations.add(model: AccountLinkRequest.self, database: .psql)
-    services.register(migrations)
 }
 
 func makeDatabaseConfig() -> PostgreSQLDatabaseConfig {

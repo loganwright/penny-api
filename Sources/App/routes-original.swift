@@ -61,7 +61,7 @@
 //                print("Fraud alert!")
 //                return Future.map(on: req) { .ok }
 //            } else if body != "verify" {
-//                let github = GitHub.API(req)
+//                let github = GitHub.Network(req)
 //                return try github.close(issue).then { return Future.map(on: req) { .ok } }
 //            }
 //
@@ -87,7 +87,7 @@
 //                return coins.flatMap(to: HTTPStatus.self) { coins in
 //                    let value = coins.map { $0.value } .reduce(0, +)
 //                    let message = "Have a coin for linking your GitHub! You now have \(value) coins."
-//                    let github = GitHub.API(req)
+//                    let github = GitHub.Network(req)
 //                    let comment = try github.postComment(to: issue, message)
 //                    return comment.flatMap(to: HTTPStatus.self) { resp in
 //                        return try github.close(issue).flatMap(to: HTTPStatus.self) { _ in return Future.map(on: req) { .ok } }
@@ -101,7 +101,7 @@
 //    }
 //
 //    router.get("close-issue", Int.parameter) { req -> Future<Issue> in
-//        let gh = GitHub.API(req)
+//        let gh = GitHub.Network(req)
 //        return try gh.postIssue(user: "penny-coin", repo: "validation", title: "Hi", body: "Delete me.").flatMap(to: Issue.self, gh.close)
 //    }
 //
@@ -120,7 +120,7 @@
 //    }
 //
 //    router.get("comment-test") { req -> Future<GitHub.Issue> in
-//        let github = GitHub.API(req)
+//        let github = GitHub.Network(req)
 //        let login = "loganwright"
 //        let slackLogin = "logan"
 //        var verification = "Hey there, @\(login), "

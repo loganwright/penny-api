@@ -139,7 +139,7 @@
 //            return
 //        }
 //
-//        let github = GitHub.API(worker)
+//        let github = GitHub.Network(worker)
 //        let slack = Slack(token: SLACK_BOT_TOKEN, worker: worker)
 //        let user = try! github.user(login: login)
 //

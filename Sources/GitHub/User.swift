@@ -87,17 +87,12 @@ public struct Repo: Content {
     public let has_downloads: Bool
     public let archived: Bool
 
-//    // TODO: Optional?
-    public let pushed_at: String?// ": "2011-01-26T19:06:43Z",
+    // ": "2011-01-26T19:06:43Z",
+    public let pushed_at: String?
     public let created_at: String
     public let updated_at: String
 
     public let permissions: [String: Bool]?
-//    ": [
-//    "admin": false,
-//    "push": false,
-//    "pull": true
-//    ],
 
     public let allow_rebase_merge: Bool?
     public let allow_squash_merge: Bool?
@@ -106,11 +101,4 @@ public struct Repo: Content {
     public let network_count: Int?
 
     public let license: [String: String?]?
-//    ": [
-//    "key": "mit",
-//    "name": "MIT License",
-//    "spdx_id": "MIT",
-//    "url": "https://api.github.com/licenses/mit",
-//    "html_url": "http://choosealicense.com/licenses/mit/"
-//    ]
 }

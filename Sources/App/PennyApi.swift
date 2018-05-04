@@ -7,7 +7,8 @@ extension GitHub.User: Mint.ExternalAccount {
     public var externalSource: String { return "github" }
 }
 
-let authorizedTokens: [String] = Environment.get("AUTHORIZED__ACCESS_TOKENS")?.components(separatedBy: ",")
+let authorizedTokens: [String] = Environment.get("AUTHORIZED__ACCESS_TOKENS")?
+    .components(separatedBy: ",")
     ?? [
         "12345"
     ]
@@ -61,7 +62,7 @@ public func pennyapi(_ open: Router) throws {
 
     open.get("coins", "github-username", String.parameter) { req -> Future<[Coin]> in
         let username = try req.parameters.next(String.self)
-        let github = GitHub.API(req)
+        let github = GitHub.Network(req)
         let user = try github.user(login: username)
 
         let mint = Vault(req)
@@ -213,7 +214,7 @@ struct GitHubLinkInput: Content {
 
 final class GitHubLinkWorker {
     private let worker: DatabaseWorker
-    private let github: GitHub.API
+    private let github: GitHub.Network
     private let vault: Vault
 
     private let input: GitHubLinkInput

@@ -26,7 +26,7 @@ extension Future where T == Response {
     }
 }
 
-public struct API {
+public struct Network {
     public let worker: Container
     public init(_ worker: Container) {
         self.worker = worker
@@ -61,7 +61,7 @@ public struct API {
     }
 }
 
-extension API {
+extension Network {
     public func postIssue(user: String, repo: String, title: String, body: String?) throws -> Future<Issue> {
         let issueUrl = "\(baseUrl)/repos/\(user)/\(repo)/issues"
 
