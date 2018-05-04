@@ -2,8 +2,6 @@ import Mint
 import Vapor
 import GitHub
 
-let AUTHORIZED_TOKENS: [String] = Environment.get("AUTHORIZED__ACCESS_TOKENS")!.components(separatedBy: ",")
-
 struct PennyAuthMiddleware: Middleware {
     func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
         guard
