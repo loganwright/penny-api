@@ -37,11 +37,11 @@ public func pennyapi(_ open: Router) throws {
         }
     }
 
-    open.get("fix-accounnts") { req -> Future<[Coin]> in
+    open.get("fix-accounts") { req -> Future<[Account]> in
         let vault = Vault(req)
 
         let discordAccounts = try Account.query(on: req).filter(\.discord != nil).all()
-        discordAccounts.flatMap(to: [Account].self) { discordAccounts in
+        return discordAccounts.flatMap(to: [Account].self) { discordAccounts in
             let cleaned = discordAccounts.map { account in
                 if let val = account.discord, val.hasPrefix("!") {
                     account.discord = String(val.dropFirst())
@@ -76,12 +76,8 @@ public func pennyapi(_ open: Router) throws {
             return try vault.accounts.delete(matchedAccounts.values.flatMap { $0 }).flatMap(to: [Account].self) { _ in
                 return new.map { $0.save(on: req) } .flatten(on: req)
             }
-
-
-            fatalError()
         }
 
-        fatalError()
 //        return Coin.query(on: req).all().flatMap(to: [Coin].self) { coins in
 //            let discord = coins.filter { $0.source == "discord" } .filter { $0.to.hasPrefix("!") || $0.from.hasPrefix("!") }
 //
