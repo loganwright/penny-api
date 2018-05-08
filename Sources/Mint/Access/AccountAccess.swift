@@ -53,7 +53,7 @@ public struct AccountAccess {
         return try users.map(get).flatten(on: worker).flatMap(to: Account.self, combine)
     }
 
-    internal func combine(_ accounts: [Account]) throws -> Future<Account> {
+    public func combine(_ accounts: [Account]) throws -> Future<Account> {
         // Must run first to avoid accidental deletes
         // accidental deletes won't lose coin records
         let sources = try accounts.combinedSources()
@@ -67,7 +67,7 @@ public struct AccountAccess {
         return account.delete(on: worker)
     }
 
-    internal func delete(_ accounts: [Account]) throws -> Future<Void> {
+    public func delete(_ accounts: [Account]) throws -> Future<Void> {
         let ids = accounts.compactMap { $0.id }
         let query = try fetchQuery(ids: ids)
         return query.delete()

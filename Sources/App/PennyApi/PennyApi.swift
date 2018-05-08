@@ -1,6 +1,8 @@
 import Mint
 import Vapor
 import GitHub
+import Fluent
+import FluentPostgreSQL
 
 struct CoinResponse: Content {
     let coin: Coin
@@ -33,6 +35,68 @@ public func pennyapi(_ open: Router) throws {
 
             return fixed.flatten(on: req)
         }
+    }
+
+    open.get("fix-accounnts") { req -> Future<[Coin]> in
+        let vault = Vault(req)
+
+        let discordAccounts = try Account.query(on: req).filter(\.discord != nil).all()
+        discordAccounts.flatMap(to: [Account].self) { discordAccounts in
+            let cleaned = discordAccounts.map { account in
+                if let val = account.discord, val.hasPrefix("!") {
+                    account.discord = String(val.dropFirst())
+                }
+                return account
+            } as [Account]
+
+            var matchedAccounts: [String: [Account]] = [:]
+            for account in cleaned {
+                guard let discord = account.discord else { continue }
+                var accounts = matchedAccounts[discord]
+                accounts?.append(account)
+                matchedAccounts[discord] = accounts
+            }
+
+            let new = matchedAccounts.values.map { group in
+                let new = Account(slack: nil, github: nil, discord: nil)
+                group.forEach { existing in
+                    if let slack = existing.slack {
+                        new.slack = slack
+                    }
+                    if let discord = existing.discord {
+                        new.discord = discord
+                    }
+                    if let github = existing.github {
+                        new.github = github
+                    }
+                }
+                return new
+            } as [Account]
+
+            return try vault.accounts.delete(matchedAccounts.values.flatMap { $0 }).flatMap(to: [Account].self) { _ in
+                return new.map { $0.save(on: req) } .flatten(on: req)
+            }
+
+
+            fatalError()
+        }
+
+        fatalError()
+//        return Coin.query(on: req).all().flatMap(to: [Coin].self) { coins in
+//            let discord = coins.filter { $0.source == "discord" } .filter { $0.to.hasPrefix("!") || $0.from.hasPrefix("!") }
+//
+//            let fixed = discord.map { coin in
+//                if coin.to.hasPrefix("!") {
+//                    coin.to = String(coin.to.dropFirst())
+//                }
+//                if coin.from.hasPrefix("!") {
+//                    coin.from = String(coin.from.dropFirst())
+//                }
+//                return coin.save(on: req)
+//                } as [Future<Coin>]
+//
+//            return fixed.flatten(on: req)
+//        }
     }
 
     open.get("coins") { Coin.query(on: $0).all() }
