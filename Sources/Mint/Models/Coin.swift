@@ -11,12 +11,12 @@ public final class Coin: Codable {
 
     /// ie: who should receive the coin
     /// the id here will correspond to the source
-    public let to: String
+    public var to: String
 
     /// ie: who gave the coin
     /// the id here will correspond to the source, for example, if source is GitHub, it
     /// will be a GitHub identifier
-    public let from: String
+    public var from: String
 
     /// An indication of the reason to possibly begin categorizing more
     public let reason: String

@@ -17,6 +17,24 @@ public func pennyapi(_ open: Router) throws {
 
     // MARK: Development Endpoints
 
+    open.get("fix-coins") { req -> Future<[Coin]> in
+        return Coin.query(on: req).all().flatMap(to: [Coin].self) { coins in
+            let discord = coins.filter { $0.source == "discord" } .filter { $0.to.hasPrefix("!") || $0.from.hasPrefix("!") }
+
+            let fixed = discord.map { coin in
+                if coin.to.hasPrefix("!") {
+                    coin.to = String(coin.to.dropFirst())
+                }
+                if coin.from.hasPrefix("!") {
+                    coin.from = String(coin.from.dropFirst())
+                }
+                return coin.save(on: req)
+            } as [Future<Coin>]
+
+            return fixed.flatten(on: req)
+        }
+    }
+
     open.get("coins") { Coin.query(on: $0).all() }
     open.get("accounts") { Account.query(on: $0).all() }
     open.get("links") { AccountLinkRequest.query(on: $0).all() }
