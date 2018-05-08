@@ -17,10 +17,10 @@ public func pennyapi(_ open: Router) throws {
 
     // MARK: Development Endpoints
 
-    devonly.get("coins") { Coin.query(on: $0).all() }
-    devonly.get("accounts") { Account.query(on: $0).all() }
-    devonly.get("links") { AccountLinkRequest.query(on: $0).all() }
-    devonly.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
+    open.get("coins") { Coin.query(on: $0).all() }
+    open.get("accounts") { Account.query(on: $0).all() }
+    open.get("links") { AccountLinkRequest.query(on: $0).all() }
+    open.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
         let source = try req.parameters.next(String.self)
         let id = try req.parameters.next(String.self)
 
