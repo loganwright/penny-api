@@ -1,10 +1,36 @@
 import App
 import Dispatch
 import XCTest
+import Mint
 
 @testable import App
 @testable import GitHub
 @testable import Vapor
+
+/* private but tests */ internal extension Character {
+    var isASCIIWhitespace: Bool {
+        return self == " " || self == "\t" || self == "\r" || self == "\n" || self == "\r\n"
+    }
+}
+
+/* private but tests */ internal extension String {
+    func trimASCIIWhitespace() -> Substring {
+        return self.dropFirst(0).trimWhitespace()
+    }
+}
+
+private extension Substring {
+    func trimWhitespace() -> Substring {
+        var me = self
+        while me.first?.isASCIIWhitespace == .some(true) {
+            me = me.dropFirst()
+        }
+        while me.last?.isASCIIWhitespace == .some(true) {
+            me = me.dropLast()
+        }
+        return me
+    }
+}
 
 final class AppTests: XCTestCase {
     func testNothing() throws {
@@ -12,6 +38,23 @@ final class AppTests: XCTestCase {
     }
 
     func testCreateUser() throws {
+        var table = [String: Int]()
+
+        originalCoinTable.split(separator: "\n").map { $0.split(separator: "|").map { $0.trimWhitespace() } }.forEach { pair in
+            let id = String(pair[0])
+            let value = Int(String(pair[1]))!
+
+            var existing = table[id] ?? 0
+            existing += value
+            table[id] = existing
+        }
+
+        let coins = table.map { to, val -> Coin in
+            return Coin(source: "slack", to: to, from: "transfer", reason: "penny-slack-transfer")
+        }
+
+        print(coins)
+        print("")
 //        let ghuser = try GitHub.User.get(with: app, id: "1").wait()
 //        let req = Request.init(using: app)
 //        let penny = PennyAPI.init(req)

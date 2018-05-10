@@ -41,7 +41,7 @@ public final class MintProvider: Provider {
 }
 
 func makeDatabaseConfig() -> PostgreSQLDatabaseConfig {
-    if let url = Environment.get("DATABASE_URL") {
+    if let url = Environment.get("HEROKU_POSTGRESQL_IVORY_URL") ?? Environment.get("DATABASE_URL") {
         return try! PostgreSQLDatabaseConfig(url: url)
     }
 
