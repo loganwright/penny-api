@@ -557,7 +557,7 @@ public func pennyapi(_ open: Router) throws {
         }
 
         let coins = table.map { to, val -> Coin in
-            return Coin(source: "slack", to: to, from: "transfer", reason: "penny-slack-transfer")
+            return Coin(source: "slack", to: to, from: "transfer", reason: "penny-slack-transfer", value: val)
         }
 
         return coins.map { $0.save(on: req) } .flatten(on: req)
