@@ -12,5 +12,5 @@ public func routes(_ router: Router) throws {
     try pennyapi(router)
 
     // GitHub WebHooks
-    try githubapi(router)
+//    try githubapi(router)
 }

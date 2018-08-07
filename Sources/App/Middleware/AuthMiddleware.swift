@@ -2,7 +2,7 @@ import Mint
 import Vapor
 import GitHub
 
-struct PennyAuthMiddleware: Middleware {
+struct SimpleAuthMiddleware: Middleware {
     func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
         guard
             let token = request.http.headers["Authorization"]
