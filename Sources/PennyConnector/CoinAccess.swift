@@ -4,7 +4,7 @@ import App
 
 extension Network {
     public struct CoinsAccess {
-        public let baseUrl: String
+        let baseUrl: String
 
         let worker: Container
         let headers: HTTPHeaders

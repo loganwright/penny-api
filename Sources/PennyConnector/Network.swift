@@ -8,6 +8,7 @@ public struct Network {
 
     public let coins: CoinsAccess
     public let linkRequests: LinkRequestsAccess
+    public let messageValidator: MessageValidator
 
     let worker: Container
     let headers: HTTPHeaders
@@ -24,8 +25,21 @@ public struct Network {
         self.worker = worker
         self.headers = headers
 
-        self.coins = CoinsAccess(baseUrl: baseUrl + "/coins", worker: worker, headers: headers)
-        self.linkRequests = LinkRequestsAccess(baseUrl: baseUrl + "/link-requests", worker: worker, headers: headers)
+        self.coins = CoinsAccess(
+            baseUrl: baseUrl + "/coins",
+            worker: worker,
+            headers: headers
+        )
+        self.linkRequests = LinkRequestsAccess(
+            baseUrl: baseUrl + "/link-requests",
+            worker: worker,
+            headers: headers
+        )
+        self.messageValidator = MessageValidator(
+            url: baseUrl + "/message-validation",
+            worker: worker,
+            headers: headers
+        )
     }
 }
 

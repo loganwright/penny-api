@@ -11,3 +11,11 @@ public struct CoinResponse: Content {
 public struct TotalCoinsResponse: Content {
     public let total: Int
 }
+
+public struct GiftMessageRequest: Content {
+    public let body: String
+}
+
+public struct GiftMessageResponse: Content {
+    public let shouldGift: Bool
+}

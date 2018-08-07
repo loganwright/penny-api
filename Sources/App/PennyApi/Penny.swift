@@ -9,7 +9,18 @@ public func pennyapi(_ open: Router) throws {
     let secure = open.grouped(SimpleAuthMiddleware())
 
     // MARK: Secure Status
+
     secure.get("secure") { _ in "authorized" }
+
+    // MARK: Message Validation
+
+    secure.post("message-validation") { req -> Future<GiftMessageResponse> in
+        let message = try req.content.decode(GiftMessageRequest.self)
+        return message.map { message in
+            let gift = shouldGiftCoin(in: message.body)
+            return GiftMessageResponse(shouldGift: gift)
+        }
+    }
 
     // MARK: Coins
 
