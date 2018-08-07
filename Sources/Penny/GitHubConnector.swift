@@ -13,7 +13,6 @@ public struct GitHubLinkRequest: Content {
 }
 
 struct GitHubConnector {
-
     let worker: Container
     let headers: HTTPHeaders = HTTPHeaders([
         ("Authorization", "Bearer \(GITHUB_MICROSERVICE_KEY)"),
