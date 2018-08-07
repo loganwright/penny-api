@@ -110,6 +110,12 @@ public func pennyapi(_ open: Router) throws {
         return link.flatMap(to: Account.self, vault.linkRequests.approve)
     }
 
+    secure.post("link-requests", "connect-github") { req -> Future<AccountLinkRequest> in
+        let ghlr = try req.content.decode(GitHubLinkRequest.self)
+        let connector = GitHubConnector(worker: req)
+        return ghlr.flatMap(connector.requestLink)
+    }
+
     // MARK: Accounts
 
     secure.get("accounts") { Account.query(on: $0).all() }
