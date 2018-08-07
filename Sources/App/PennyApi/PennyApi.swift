@@ -3,26 +3,20 @@ import Vapor
 import GitHub
 import Fluent
 import FluentPostgreSQL
-
-struct CoinResponse: Content {
-    let coin: Coin
-    let total: Int
-}
-
-struct TotalCoinsResponse: Content {
-    let total: Int
-}
-
 import Foundation
 
 public func pennyapi(_ open: Router) throws {
     // Run through basic auth verification
     let secure = open.grouped(SimpleAuthMiddleware())
 
-    open.get("coins") { Coin.query(on: $0).all() }
-    open.get("accounts") { Account.query(on: $0).all() }
-    open.get("links") { AccountLinkRequest.query(on: $0).all() }
-    open.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
+    // MARK: Secure Status
+    secure.get("secure") { _ in "authorized" }
+
+    // MARK: Coins
+
+    secure.get("coins") { Coin.query(on: $0).all() }
+
+    secure.get("coins", String.parameter, String.parameter) { req -> Future<[Coin]> in
         let source = try req.parameters.next(String.self)
         let id = try req.parameters.next(String.self)
 
@@ -30,13 +24,7 @@ public func pennyapi(_ open: Router) throws {
         return try mint.coins.all(source: source, sourceId: id)
     }
 
-    // MARK: Secure Status
-
-    secure.get("secure") { _ in "authorized" }
-
-    // MARK: Coin Totals
-
-    open.get("coins", String.parameter, String.parameter, "total") { req -> Future<TotalCoinsResponse> in
+    secure.get("coins", String.parameter, String.parameter, "total") { req -> Future<TotalCoinsResponse> in
         let source = try req.parameters.next(String.self)
         let id = try req.parameters.next(String.self)
 
@@ -44,38 +32,14 @@ public func pennyapi(_ open: Router) throws {
         return try vault.coins.total(source: source, sourceId: id).map(TotalCoinsResponse.init)
     }
 
-    open.get("coins", "github-username", String.parameter, "total") { req -> Future<TotalCoinsResponse> in
-        fatalError()
-//        let username = try req.parameters.next(String.self)
-//        let github = GitHub.Network(req, token: PENNY_GITHUB_TOKEN)
-//        let user = try github.user(login: username)
-//
-//        let vault = Vault(req)
-//        let total = user.flatMap(to: Int.self) { user in
-//            return try vault.coins.total(source: user.externalSource, sourceId: user.externalId)
-//        }
-//        return total.map(TotalResponse.init)
-    }
-
-    // MARK: Post Coin
-
     secure.post("coins") { request -> Future<[CoinResponse]> in
-        struct Package: Content {
-            let from: String
-            let to: String
-            let source: String
-            let reason: String
-
-            let value: Int?
-        }
-
         let vault = Vault(request)
 
-        let pkgs = try request.content.decode([Package].self)
+        let pkgs = try request.content.decode([Coin].self)
         let coins = pkgs.flatMap(to: [Coin].self) { pkgs in
             return pkgs.map { pkg in
                 vault.coins.give(to: pkg.to, from: pkg.from, source: pkg.source, reason: pkg.reason, value: pkg.value)
-            }.flatten(on: request)
+                }.flatten(on: request)
         }
 
         let pairs = coins.map(to: [(coin: Coin, total: Future<Int>)].self) { coins in
@@ -93,6 +57,10 @@ public func pennyapi(_ open: Router) throws {
         }
     }
 
+    // MARK:
+
+    secure.get("accounts") { Account.query(on: $0).all() }
+
     // MARK: Accounts
 
     secure.get("accounts", String.parameter, String.parameter) { req -> Future<Account> in
@@ -105,6 +73,7 @@ public func pennyapi(_ open: Router) throws {
 
     // MARK: Links
 
+    secure.get("links") { AccountLinkRequest.query(on: $0).all() }
     
     // Submit GitHub Link Request
     secure.post("links", "github") { req -> Future<GitHubLinkResponse> in
