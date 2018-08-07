@@ -1,5 +1,4 @@
 import Vapor
-import PennyConnector
 import Mint
 
 let GITHUB_MICROSERVICE_BASE_URL = Environment.get("GITHUB_MICROSERVICE_URL") ?? "http://localhost:9000"
@@ -25,5 +24,11 @@ struct GitHubConnector {
 
         let client = try worker.client()
         return client.post(url, headers: headers, content: req).become()
+    }
+}
+
+extension Future where T == Response {
+    public func become<C: Content>(_ type: C.Type = C.self) -> Future<C> {
+        return flatMap(to: C.self) { result in return try result.content.decode(C.self) }
     }
 }
