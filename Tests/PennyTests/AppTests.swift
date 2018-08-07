@@ -40,5 +40,5 @@ final class AppTests: XCTestCase {
     ]
 }
 
-let app = try! App.build()
+let app = try! Penny.build()
 

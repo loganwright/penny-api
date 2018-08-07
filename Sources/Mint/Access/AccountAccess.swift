@@ -27,16 +27,9 @@ public struct AccountAccess {
     // MARK: Search
 
     internal func search(source: String, sourceId: String) throws -> Future<Account?> {
-        let filter = try QueryFilter<PostgreSQLDatabase>(
-            field: .init(name: source),
-            type: .equals,
-            value: .data(sourceId)
-        )
-        let item = QueryFilterItem.single(filter)
-
-        let query = Account.query(on: worker)
-        query.addFilter(item)
-        return query.first()
+        return Account.query(on: worker)
+            .filter(.column(nil, .identifier(source)), .equal, sourceId)
+            .first()
     }
 
     // MARK: Create
@@ -73,8 +66,8 @@ public struct AccountAccess {
         return query.delete()
     }
 
-    internal func fetchQuery(ids: [UUID]) throws -> QueryBuilder<Account, Account> {
-        return try Account.query(on: worker).filter(\.id ~~ ids)
+    internal func fetchQuery(ids: [UUID]) -> QueryBuilder<PostgreSQLDatabase, Account> {
+        return Account.query(on: worker).filter(\.id ~~ ids)
     }
 }
 

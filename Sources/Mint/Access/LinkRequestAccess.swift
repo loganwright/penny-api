@@ -42,27 +42,11 @@ public struct LinkRequestAccess {
 
     /// Finds an existing link request if it exists
     public func find(requestedSource: String, requestedId: String, reference: String) throws -> Future<AccountLinkRequest?> {
-        let query = AccountLinkRequest.query(on: worker)
-        let source = try QueryFilter<PostgreSQLDatabase>(
-            field: "requestedSource",
-            type: .equals,
-            value: .data(requestedSource)
-        )
-        let id = try QueryFilter<PostgreSQLDatabase>(
-            field: "requestedId",
-            type: .equals,
-            value: .data(requestedId)
-        )
-        let ref = try QueryFilter<PostgreSQLDatabase>(
-            field: "reference",
-            type: .equals,
-            value: .data(reference)
-        )
-
-        let items = [source, id, ref].map(QueryFilterItem.single)
-        let group = QueryFilterItem.group(.and, items)
-        query.addFilter(group)
-        return query.first()
+        return AccountLinkRequest.query(on: worker)
+            .filter(\.requestedSource == requestedSource)
+            .filter(\.requestedId == requestedId)
+            .filter(\.reference == reference)
+            .first()
     }
 
     // Processes and approves the link request

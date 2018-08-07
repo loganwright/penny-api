@@ -26,12 +26,9 @@ public struct CoinAccess {
     }
 
     public func all(for account: Account) throws -> Future<[Coin]> {
-        let items = try account.sources.map(sourceFilter)
-        let or = QueryFilterItem.group(.or, items)
-
-        let query = Coin.query(on: worker)
-        query.addFilter(or)
-        return query.all()
+        let filters = try account.sources.map(sourceFilter)
+        // TODO: Improve to use fewer req's, by combining w/ `||` and making single database req
+        return filters.map { $0.all() } .flatten(on: worker) .map { coins in return coins.flatMap { $0 } }
     }
 
 
@@ -67,23 +64,9 @@ public struct CoinAccess {
         return coin.save(on: worker)
     }
 
-    // MARK: Source Filter, To Improve
-    private func sourceFilter(source: String, id: String) throws -> QueryFilterItem<PostgreSQLDatabase> {
-        // TODO: Improve w/ fancy filter stuff
-        let sourceFilter = try QueryFilter<PostgreSQLDatabase>(
-            field: "source",
-            type: .equals,
-            value: .data(source)
-        )
-
-        let idFilter = try QueryFilter<PostgreSQLDatabase>(
-            field: "to",
-            type: .equals,
-            value: .data(id)
-        )
-
-        let source = QueryFilterItem.single(sourceFilter)
-        let id = QueryFilterItem.single(idFilter)
-        return .group(.and, [source, id])
+    private func sourceFilter(source: String, id: String) throws -> QueryBuilder<PostgreSQLDatabase, Coin> {
+        return Coin.query(on: worker)
+            .filter(.column(nil, .identifier("source")), .equal, source)
+            .filter(.column(nil, .identifier("to")), .equal, id)
     }
 }

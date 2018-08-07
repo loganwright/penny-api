@@ -18,7 +18,7 @@ public final class MintProvider: Provider {
 
         let postgres = PostgreSQLDatabase(config: databaseConfig)
 
-        var databases = DatabaseConfig()
+        var databases = DatabasesConfig()
         databases.add(database: postgres, as: .psql)
         services.register(databases)
 
@@ -42,7 +42,7 @@ public final class MintProvider: Provider {
 
 func makeDatabaseConfig() -> PostgreSQLDatabaseConfig {
     if let url = Environment.get("DATABASE_URL") {
-        return try! PostgreSQLDatabaseConfig(url: url)
+        return PostgreSQLDatabaseConfig(url: url)!
     }
 
     let hostname = Environment.get("DATABASE_HOSTNAME") ?? "localhost"
