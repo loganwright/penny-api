@@ -45,7 +45,7 @@ func makeDatabaseConfig() -> PostgreSQLDatabaseConfig {
         return try! PostgreSQLDatabaseConfig(url: url)
     }
 
-    let hostname = Environment.get("DATABASE_HOSTNAME") ?? "0.0.0.0"
+    let hostname = Environment.get("DATABASE_HOSTNAME") ?? "localhost"
     let username = Environment.get("DATABASE_USER") ?? "vapor"
     let databaseName = Environment.get("DATABASE_DB") ?? "vapor"
     let password = Environment.get("DATABASE_PASSWORD") ?? "password"

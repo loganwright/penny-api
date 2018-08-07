@@ -6,7 +6,7 @@ func build() throws -> Application {
     var env = try Environment.detect()
     var services = Services.default()
 
-    try App.configure(&config, &env, &services)
+    try configure(&config, &env, &services)
 
     let app = try Application(
         config: config,

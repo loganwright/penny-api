@@ -1,20 +1,55 @@
-<p align="center">
-    <img src="https://user-images.githubusercontent.com/1342803/36623515-7293b4ec-18d3-11e8-85ab-4e2f8fb38fbd.png" width="320" alt="API Template">
-    <br>
-    <br>
-    <a href="http://docs.vapor.codes/3.0/">
-        <img src="http://img.shields.io/badge/read_the-docs-2196f3.svg" alt="Documentation">
-    </a>
-    <a href="http://vapor.team">
-        <img src="http://vapor.team/badge.svg" alt="Slack Team">
-    </a>
-    <a href="LICENSE">
-        <img src="http://img.shields.io/badge/license-MIT-brightgreen.svg" alt="MIT License">
-    </a>
-    <a href="https://circleci.com/gh/vapor/api-template">
-        <img src="https://circleci.com/gh/vapor/api-template.svg?style=shield" alt="Continuous Integration">
-    </a>
-    <a href="https://swift.org">
-        <img src="http://img.shields.io/badge/swift-4.1-brightgreen.svg" alt="Swift 4.1">
-    </a>
-</center>
+## Penny API
+
+## Auth
+
+Penny uses authorized tokens in the header field
+
+```
+Authorization: Bearer YOUR_TOKEN_HERE
+```
+
+#### Tokens
+
+Tokens should be in a `,` separated list at the ENV variable `AUTHORIZED_ACCESS_TOKENS`.
+
+```
+export AUTHORIZED_ACCESS_TOKENS=foo,bar,coo
+```
+
+#### Testing
+
+Use the token `tester` when testing. 
+
+> osx only, otherwise configure to your environment
+
+## Database
+
+#### Start
+
+Use the following command to start postgres locally.
+
+```
+docker run --name postgres -e POSTGRES_DB=vapor -e POSTGRES_USER=vapor -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres
+```
+
+#### Environment Variables For Deploy
+
+```swift
+func makeDatabaseConfig() -> PostgreSQLDatabaseConfig {
+    if let url = Environment.get("DATABASE_URL") {
+        return try! PostgreSQLDatabaseConfig(url: url)
+    }
+
+    let hostname = Environment.get("DATABASE_HOSTNAME") ?? "localhost"
+    let username = Environment.get("DATABASE_USER") ?? "vapor"
+    let databaseName = Environment.get("DATABASE_DB") ?? "vapor"
+    let password = Environment.get("DATABASE_PASSWORD") ?? "password"
+    return PostgreSQLDatabaseConfig(
+        hostname: hostname,
+        username: username,
+        database: databaseName,
+        password: password
+    )
+}
+```
+
