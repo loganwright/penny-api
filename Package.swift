@@ -14,14 +14,14 @@ let package = Package(
     targets: [
         // The API
         .target(name: "Mint", dependencies: ["FluentPostgreSQL", "Vapor"]),
-        .target(name: "App", dependencies: ["FluentPostgreSQL", "Vapor", "Mint"]),
-        .target(name: "Run", dependencies: ["App"]),
+        .target(name: "Penny", dependencies: ["FluentPostgreSQL", "Vapor", "Mint"]),
+        .target(name: "Run", dependencies: ["Penny"]),
 
         // The API Connector
-        .target(name: "PennyConnector", dependencies: ["Vapor", "Mint", "App"]),
+        .target(name: "PennyConnector", dependencies: ["Vapor", "Mint", "Penny"]),
 
         // Tests
-        .testTarget(name: "AppTests", dependencies: ["App"]),
+        .testTarget(name: "PennyTests", dependencies: ["Penny"]),
         .testTarget(name: "MintTests", dependencies: ["Mint"])
     ]
 )

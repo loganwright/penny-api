@@ -1,9 +1,8 @@
-import App
 import Dispatch
 import XCTest
 import Mint
 
-@testable import App
+@testable import Penny
 @testable import Vapor
 
 /* private but tests */ internal extension Character {

@@ -1,6 +1,6 @@
 import Vapor
 import Mint
-import App
+import Penny
 
 extension Network {
     public struct MessageValidator {

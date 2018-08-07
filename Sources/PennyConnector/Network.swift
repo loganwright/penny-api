@@ -1,6 +1,6 @@
 import Vapor
 import Mint
-import App
+import Penny
 
 public struct Network {
     public let token: String
