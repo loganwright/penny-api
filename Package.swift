@@ -3,6 +3,9 @@ import PackageDescription
 
 let package = Package(
     name: "penny",
+    products: [
+        .library(name: "PennyConnector", targets: ["PennyConnector"]),
+    ],
     dependencies: [
         // 💧 A server-side Swift web framework.
         .package(url: "https://github.com/vapor/vapor.git", from: "3.0.0-rc"),
