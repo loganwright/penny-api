@@ -8,6 +8,7 @@ let GITHUB_MICROSERVICE_KEY = Environment.get("GITHUB_MICROSERVICE_KEY") ?? "tes
 public struct GitHubLinkRequest: Content {
     public let login: String
     public let source: String
+    public let sourceName: String
     public let sourceId: String
 }
 
