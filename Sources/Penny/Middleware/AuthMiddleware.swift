@@ -9,6 +9,7 @@ private let AUTHORIZED_ACCESS_TOKENS: [String] = {
 }()
 
 public struct SimpleAuthMiddleware: Middleware {
+    public init() {}
     public func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
         guard
             let token = request.http.headers["Authorization"]
