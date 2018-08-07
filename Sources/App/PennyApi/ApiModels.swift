@@ -1,6 +1,5 @@
 import Mint
 import Vapor
-import GitHub
 import Fluent
 import FluentPostgreSQL
 

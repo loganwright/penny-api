@@ -1,6 +1,5 @@
 import Routing
 import Vapor
-import GitHub
 
 public func routes(_ router: Router) throws {
     // I always keep a status check

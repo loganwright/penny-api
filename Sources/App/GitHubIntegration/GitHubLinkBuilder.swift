@@ -1,17 +1,17 @@
 import Mint
 import Vapor
 
-struct GitHubLinkResponse: Content {
-    let message: String
-    let linkRequest: AccountLinkRequest
-}
-
-struct GitHubLinkInput: Content {
-    let githubUsername: String
-    let source: String
-    let id: String
-    let username: String
-}
+//struct GitHubLinkResponse: Content {
+//    let issueUrl: String
+//    let linkRequest: AccountLinkRequest
+//}
+//
+//struct GitHubLinkInput: Content {
+//    let githubUsername: String
+//    let source: String
+//    let id: String
+//    let username: String
+//}
 
 
 //final class GitHubLinkBuilder {

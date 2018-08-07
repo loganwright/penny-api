@@ -57,44 +57,39 @@ public struct Network: ParentNetwork {
 
         public func add(_ coins: [Coin]) throws -> Future<[CoinResponse]> {
             let client = try worker.client()
-            return try client.post(baseUrl, headers: headers, content: coins).become()
+            return client.post(baseUrl, headers: headers, content: coins).become()
         }
     }
 
-//    func coins() throws -> Future<[Coin]> {
-//        let url = baseUrl + "/coins"
-//        let client = try worker.client()
-//        return client.get(url, headers: baseHeaders).become()
-//    }
-//
-//    func coins(source: String, id: String) throws -> Future<[Coin]> {
-//        let url = baseUrl + "/coins/\(source)/\(id)"
-//        let client = try worker.client()
-//        return client.get(url, headers: baseHeaders).become()
-//    }
-//
-//    func coinsTotal(source: String, id: String) throws -> Future<TotalCoinResponse> {
-//        let url = baseUrl + "/coins/\(source)/\(id)/total"
-//        let client = try worker.client()
-//        return client.get(url, headers: baseHeaders).become()
-//    }
-}
+    public struct LinkRequestsAccess {
+        public let baseUrl: String
 
-extension Network {
-//    public func postIssue(user: String, repo: String, title: String, body: String?) throws -> Future<Issue> {
-//        let issueUrl = "\(baseUrl)/repos/\(user)/\(repo)/issues"
-//
-//        struct Post: Content {
-//            let title: String
-//            let body: String?
-//            let labels: [String]?
-//            let assignees: [String]
-//        }
-//
-//        let post = Post(title: title, body: body, labels: ["validate"], assignees: [])
-//        let client = try worker.client()
-//        return client.post(issueUrl, headers: baseHeaders, content: post).become()
-//    }
+        let worker: Container
+        let headers: HTTPHeaders
+
+        public func all() throws -> Future<[AccountLinkRequest]> {
+            let client = try worker.client()
+            return client.get(baseUrl, headers: headers).become()
+        }
+
+        public func find(requestedSource: String, requestedId: String, reference: String) throws -> Future<AccountLinkRequest> {
+            let url = baseUrl + "/\(requestedSource)/\(requestedId)/\(reference)"
+            let client = try worker.client()
+            return client.get(url, headers: headers).become()
+
+        }
+
+        public func add(_ link: AccountLinkRequest) throws -> Future<AccountLinkRequest> {
+            let client = try worker.client()
+            return client.post(baseUrl, headers: headers, content: link).become()
+        }
+
+        public func approve(_ link: AccountLinkRequest) throws -> Future<Account> {
+            let url = baseUrl + "/approve"
+            let client = try worker.client()
+            return client.post(url, headers: headers, content: link).become()
+        }
+    }
 }
 
 extension Container {
@@ -108,15 +103,3 @@ extension Future where T == Response {
         return flatMap(to: C.self) { result in return try result.content.decode(C.self) }
     }
 }
-
-//extension Client {
-//    fileprivate func post<C>(_ url: URLRepresentable, headers: HTTPHeaders = .init(), content: C) -> Future<Response> where C: Content {
-//        fatalError()
-////        return send(.POST, headers: headers, to: url) { try $0.content.encode(content) }
-//    }
-//
-//    fileprivate func patch<C>(_ url: URLRepresentable, headers: HTTPHeaders = .init(), content: C) -> Future<Response> where C: Content {
-//        fatalError()
-////        return send(.PATCH, headers: headers, to: url) { try $0.content.encode(content) }
-//    }
-//}

@@ -1,10 +1,8 @@
-import Mint
 import Vapor
-import GitHub
 
 private let AUTHORIZED_ACCESS_TOKENS: [String] = {
     #if os(macOS)
-    return ["test-access-token"]
+    return ["tester"]
     #else
     return Environment.get("AUTHORIZED_ACCESS_TOKENS")!.components(separatedBy: ",")
     #endif

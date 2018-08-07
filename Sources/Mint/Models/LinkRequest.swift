@@ -15,7 +15,7 @@ public final class AccountLinkRequest: Codable {
 
     public var reference: String
 
-    init(initiationSource: String, initiationId: String, requestedSource: String, requestedId: String, reference: String) {
+    public init(initiationSource: String, initiationId: String, requestedSource: String, requestedId: String, reference: String) {
         self.initiationId = initiationId
         self.initiationSource = initiationSource
         self.requestedSource = requestedSource

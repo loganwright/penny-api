@@ -1,6 +1,4 @@
-import Mint
 import Vapor
-import GitHub
 
 struct DevelopmentOnlyMiddleware: Middleware {
     func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
