@@ -1,6 +1,5 @@
 import Routing
 import Vapor
-import Slack
 
 func build() throws -> Application {
     var config = Config.default()
