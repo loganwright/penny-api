@@ -10,7 +10,4 @@ public func routes(_ router: Router) throws {
 
     // Penny Endpoints
     try pennyapi(router)
-
-    // GitHub WebHooks
-//    try githubapi(router)
 }

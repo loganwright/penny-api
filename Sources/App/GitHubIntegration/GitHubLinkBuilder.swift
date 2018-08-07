@@ -1,19 +1,19 @@
-//import Mint
-//import Vapor
-//import GitHub
-//
-//struct GitHubLinkResponse: Content {
-//    let message: String
-//    let linkRequest: AccountLinkRequest
-//}
-//
-//struct GitHubLinkInput: Content {
-//    let githubUsername: String
-//    let source: String
-//    let id: String
-//    let username: String
-//}
-//
+import Mint
+import Vapor
+
+struct GitHubLinkResponse: Content {
+    let message: String
+    let linkRequest: AccountLinkRequest
+}
+
+struct GitHubLinkInput: Content {
+    let githubUsername: String
+    let source: String
+    let id: String
+    let username: String
+}
+
+
 //final class GitHubLinkBuilder {
 //    private let worker: DatabaseWorker
 //    private let github: GitHub.Network
@@ -39,24 +39,25 @@
 //    }
 //
 //    private func postGitHubIssue() throws -> Future<GitHub.Issue> {
-//        var verification = "Hey there, @\(input.githubUsername), "
-//        verification += "\(input.username) from \(input.source), wants to link this GitHub account."
-//        verification += "\n\n"
-//        verification += "Continue:\n"
-//        verification += "Comment on this issue with the word, `verify`."
-//        verification += "\n\n"
-//        verification += "**THAT'S NOT ME!**\n"
-//        verification += "Comment on this issue with the word, `fraud`."
-//        verification += "\n\n"
-//        verification += "Something Else:\n"
-//        verification += "Type anything else to close this issue."
-//
-//        return try github.postIssue(
-//            user: "penny-coin",
-//            repo: "validation",
-//            title: "Verifying: \(input.githubUsername)",
-//            body: verification
-//        )
+//        fatalError()
+////        var verification = "Hey there, @\(input.githubUsername), "
+////        verification += "\(input.username) from \(input.source), wants to link this GitHub account."
+////        verification += "\n\n"
+////        verification += "Continue:\n"
+////        verification += "Comment on this issue with the word, `verify`."
+////        verification += "\n\n"
+////        verification += "**THAT'S NOT ME!**\n"
+////        verification += "Comment on this issue with the word, `fraud`."
+////        verification += "\n\n"
+////        verification += "Something Else:\n"
+////        verification += "Type anything else to close this issue."
+////
+////        return try github.postIssue(
+////            user: "penny-coin",
+////            repo: "validation",
+////            title: "Verifying: \(input.githubUsername)",
+////            body: verification
+////        )
 //    }
 //
 //    private func githubUser() throws -> Future<GitHub.User> {

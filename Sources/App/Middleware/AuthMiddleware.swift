@@ -2,14 +2,22 @@ import Mint
 import Vapor
 import GitHub
 
-struct SimpleAuthMiddleware: Middleware {
-    func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
+private let AUTHORIZED_ACCESS_TOKENS: [String] = {
+    #if os(macOS)
+    return ["test-access-token"]
+    #else
+    return Environment.get("AUTHORIZED_ACCESS_TOKENS")!.components(separatedBy: ",")
+    #endif
+}()
+
+public struct SimpleAuthMiddleware: Middleware {
+    public func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
         guard
             let token = request.http.headers["Authorization"]
                 .first?
                 .components(separatedBy: "Bearer ")
                 .last,
-            AUTHORIZED_TOKENS.contains(token)
+            AUTHORIZED_ACCESS_TOKENS.contains(token)
             else { throw "unauthorized" }
 
         return try next.respond(to: request)

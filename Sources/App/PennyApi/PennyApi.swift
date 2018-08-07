@@ -105,13 +105,15 @@ public func pennyapi(_ open: Router) throws {
 
     // MARK: Links
 
+    
     // Submit GitHub Link Request
-//    secure.post("links", "github") { req -> Future<GitHubLinkResponse> in
+    secure.post("links", "github") { req -> Future<GitHubLinkResponse> in
+        fatalError()
 //        let pkg = try req.content.decode(GitHubLinkInput.self)
 //        return pkg.flatMap(to: GitHubLinkResponse.self) { pkg in
 //            return try GitHubLinkBuilder.linkGitHub(on: req, with: pkg)
 //        }
-//    }
+    }
 
     // Submit Link Request
     secure.post("links") { req -> Future<AccountLinkRequest> in
