@@ -54,7 +54,7 @@ extension String {
 extension Character {
     fileprivate var isWhitespace: Bool {
         switch self {
-        case " ", "\t", "\n", "\r":
+        case " ", "\t", "\n", "\r", "\r\n":
             return true
         default:
             return false

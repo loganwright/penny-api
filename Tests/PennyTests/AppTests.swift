@@ -5,40 +5,16 @@ import Mint
 @testable import Penny
 @testable import Vapor
 
-/* private but tests */ internal extension Character {
-    var isASCIIWhitespace: Bool {
-        return self == " " || self == "\t" || self == "\r" || self == "\n" || self == "\r\n"
-    }
-}
-
-/* private but tests */ internal extension String {
-    func trimASCIIWhitespace() -> Substring {
-        return self.dropFirst(0).trimWhitespace()
-    }
-}
-
-private extension Substring {
-    func trimWhitespace() -> Substring {
-        var me = self
-        while me.first?.isASCIIWhitespace == .some(true) {
-            me = me.dropFirst()
-        }
-        while me.last?.isASCIIWhitespace == .some(true) {
-            me = me.dropLast()
-        }
-        return me
-    }
-}
+let app = try! Penny.build()
 
 final class AppTests: XCTestCase {
-    func testNothing() throws {
-        XCTAssert(true)
-    }
-
     static let allTests = [
-        ("testNothing", testNothing)
+        ("testCoinLogic", testCoinLogic)
     ]
-}
 
-let app = try! Penny.build()
+    func testCoinLogic() throws {
+        let should = shouldGiftCoin(in: "@LoganWright ++\r\n")
+        XCTAssertTrue(should)
+    }
+}
 
