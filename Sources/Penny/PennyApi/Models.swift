@@ -14,6 +14,9 @@ public struct TotalCoinsResponse: Content {
 
 public struct GiftMessageRequest: Content {
     public let body: String
+    public init(body: String) {
+        self.body = body
+    }
 }
 
 public struct GiftMessageResponse: Content {

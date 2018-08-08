@@ -9,8 +9,9 @@ extension Network {
         let headers: HTTPHeaders
 
         public func validate(_ body: String) throws -> Future<Bool> {
+            let request = GiftMessageRequest(body: body)
             let client = try worker.client()
-            return client.post(url, headers: headers)
+            return client.post(url, headers: headers, content: request)
                 .become(GiftMessageResponse.self)
                 .map { $0.shouldGift }
         }
