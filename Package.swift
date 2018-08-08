@@ -4,6 +4,7 @@ import PackageDescription
 let package = Package(
     name: "penny",
     products: [
+        .library(name: "Penny", targets: ["Penny"]),
         .library(name: "PennyConnector", targets: ["PennyConnector"]),
     ],
     dependencies: [
