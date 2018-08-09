@@ -31,5 +31,22 @@ extension Network {
             let client = try worker.client()
             return client.post(url, headers: headers, content: link).become()
         }
+
+        public func requestConnectGitHub(
+            login: String,
+            source: String,
+            sourceName: String,
+            sourceId: String
+        ) throws -> Future<AccountLinkRequest> {
+            let link = GitHubLinkRequest(
+                login: login,
+                source: source,
+                sourceName: sourceName,
+                sourceId: sourceId
+            )
+            let url = baseUrl + "/connect-github"
+            let client = try worker.client()
+            return client.post(url, headers: headers, content: link).become()
+        }
     }
 }

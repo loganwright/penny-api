@@ -9,6 +9,13 @@ public struct GitHubLinkRequest: Content {
     public let source: String
     public let sourceName: String
     public let sourceId: String
+
+    public init(login: String, source: String, sourceName: String, sourceId: String) {
+        self.login = login
+        self.source = source
+        self.sourceName = sourceName
+        self.sourceId = sourceId
+    }
 }
 
 struct GitHubConnector {
