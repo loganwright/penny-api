@@ -18,6 +18,14 @@ public struct GitHubLinkRequest: Content {
     }
 }
 
+public struct GitHubLinkResponse: Content {
+    public let validationUrl: String
+    public let accountLinkRequest: AccountLinkRequest
+    public init(validationUrl: String, accountLinkRequest: AccountLinkRequest) {
+        self.validationUrl = validationUrl
+        self.accountLinkRequest = accountLinkRequest
+    }
+}
 struct GitHubConnector {
     let worker: Container
     let headers: HTTPHeaders = HTTPHeaders([
@@ -26,7 +34,7 @@ struct GitHubConnector {
         ("Content-Type", "application/json"),
     ])
 
-    func requestLink(_ req: GitHubLinkRequest) throws -> Future<AccountLinkRequest> {
+    func requestLink(_ req: GitHubLinkRequest) throws -> Future<GitHubLinkResponse> {
         let url = GITHUB_MICROSERVICE_BASE_URL + "/link-request"
 
         let client = try worker.client()

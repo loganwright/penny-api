@@ -37,7 +37,7 @@ extension Network {
             source: String,
             sourceName: String,
             sourceId: String
-        ) throws -> Future<AccountLinkRequest> {
+        ) throws -> Future<GitHubLinkResponse> {
             let link = GitHubLinkRequest(
                 login: login,
                 source: source,
