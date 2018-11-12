@@ -39,7 +39,7 @@ func shouldGiftCoin(in msg: String) -> Bool {
 
 extension String {
     func trimmedWhitespace() -> String {
-        var characters = Substring(self)
+        var characters = Substring(self.lowercased())
         while characters.first?.isWhitespace == true {
             characters.removeFirst()
         }
