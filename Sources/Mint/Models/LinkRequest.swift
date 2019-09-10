@@ -25,7 +25,9 @@ public final class AccountLinkRequest: Codable {
     }
 }
 
-extension AccountLinkRequest: PostgreSQLUUIDModel {}
+extension AccountLinkRequest: PostgreSQLUUIDModel {
+    public static let entity = "accountlinkrequests"
+}
 extension AccountLinkRequest: Content {}
 extension AccountLinkRequest: Migration {}
 extension AccountLinkRequest: Parameter {}

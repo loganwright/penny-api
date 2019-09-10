@@ -49,7 +49,9 @@ public final class Coin: Codable {
     }
 }
 
-extension Coin: PostgreSQLUUIDModel {}
+extension Coin: PostgreSQLUUIDModel {
+    public static let entity = "coins"
+}
 extension Coin: Content {}
 extension Coin: Migration {}
 extension Coin: Parameter {}

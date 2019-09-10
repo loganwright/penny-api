@@ -43,7 +43,9 @@ extension Account {
     }
 }
 
-extension Account: PostgreSQLUUIDModel {}
+extension Account: PostgreSQLUUIDModel {
+    public static let entity = "accounts"
+}
 extension Account: Content {}
 extension Account: Migration {}
 extension Account: Parameter {}
