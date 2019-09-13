@@ -16,6 +16,7 @@ let package = Package(
         // The API
         .target(name: "Mint", dependencies: ["FluentPostgreSQL", "Vapor"]),
         .target(name: "Penny", dependencies: ["FluentPostgreSQL", "Vapor", "Mint"]),
+        .target(name: "PennyGitHub", dependencies: ["Vapor", "PennyConnector", "Penny"]),
         .target(name: "Run", dependencies: ["Penny"]),
 
         // The API Connector
