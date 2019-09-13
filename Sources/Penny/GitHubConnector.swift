@@ -1,17 +1,17 @@
 import Vapor
 import Mint
 
-let GITHUB_MICROSERVICE_BASE_URL = Environment.get("GITHUB_MICROSERVICE_URL") ?? "http://localhost:9000"
+let GITHUB_MICROSERVICE_URL = Environment.get("GITHUB_MICROSERVICE_URL") ?? "http://localhost:9000"
 let GITHUB_MICROSERVICE_KEY = Environment.get("GITHUB_MICROSERVICE_KEY") ?? "tester"
 
 public struct GitHubLinkRequest: Content {
-    public let login: String
+    public let githubUsername: String
     public let source: String
     public let sourceName: String
     public let sourceId: String
 
     public init(login: String, source: String, sourceName: String, sourceId: String) {
-        self.login = login
+        self.githubUsername = login
         self.source = source
         self.sourceName = sourceName
         self.sourceId = sourceId
@@ -35,7 +35,7 @@ struct GitHubConnector {
     ])
 
     func requestLink(_ req: GitHubLinkRequest) throws -> Future<GitHubLinkResponse> {
-        let url = GITHUB_MICROSERVICE_BASE_URL + "/link-request"
+        let url = GITHUB_MICROSERVICE_URL + "/link-request"
 
         let client = try worker.client()
         return client.post(url, headers: headers, content: req).become()
