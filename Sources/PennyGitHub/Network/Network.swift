@@ -61,7 +61,7 @@ public struct Network {
 
 extension Network {
     public func postValidationIssue(_ ghlr: GitHubLinkRequest) throws -> Future<Issue> {
-        let title = "Verifying: \(ghlr.login)"
+        let title = "Verifying: \(ghlr.githubUsername)"
         let body = ghlr.verificationMessage()
 
         return try postIssue(
@@ -90,7 +90,7 @@ extension Network {
 
 extension GitHubLinkRequest {
     func verificationMessage() -> String {
-        var verification = "Hey there, @\(login), "
+        var verification = "Hey there, @\(githubUsername), "
         verification += "`\(sourceName)` from \(source), wants to link this GitHub account."
         verification += "\n\n"
         verification += "Continue:\n"

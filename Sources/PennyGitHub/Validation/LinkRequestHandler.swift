@@ -18,7 +18,7 @@ struct LinkRequestHandler {
     }
 
     private func associatedUser() throws -> Future<User> {
-        return try worker.github.user(login: ghlr.login)
+        return try worker.github.user(login: ghlr.githubUsername)
     }
 
     private func handle(user: User, issue: Issue) throws -> Future<GitHubLinkResponse> {
