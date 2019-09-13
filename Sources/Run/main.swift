@@ -1,3 +1,5 @@
 import Penny
+import PennyGitHub
 
-start()
+Penny.start()
+try PennyGitHub.start()

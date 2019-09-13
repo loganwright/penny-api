@@ -6,6 +6,7 @@ let package = Package(
     products: [
         .library(name: "Penny", targets: ["Penny"]),
         .library(name: "PennyConnector", targets: ["PennyConnector"]),
+        .library(name: "PennyGitHub", targets: ["PennyGitHub"]),
     ],
     dependencies: [
         // 💧 A server-side Swift web framework.
@@ -17,7 +18,7 @@ let package = Package(
         .target(name: "Mint", dependencies: ["FluentPostgreSQL", "Vapor"]),
         .target(name: "Penny", dependencies: ["FluentPostgreSQL", "Vapor", "Mint"]),
         .target(name: "PennyGitHub", dependencies: ["Vapor", "PennyConnector", "Penny"]),
-        .target(name: "Run", dependencies: ["Penny"]),
+        .target(name: "Run", dependencies: ["Penny", "PennyGitHub"]),
 
         // The API Connector
         .target(name: "PennyConnector", dependencies: ["Vapor", "Mint", "Penny"]),

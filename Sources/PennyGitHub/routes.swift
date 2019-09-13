@@ -5,10 +5,6 @@ import PennyConnector
 /// Register your application's routes here.
 public func routes(_ open: Router) throws {
 
-    // MARK: Status
-
-    open.get("status") { _ in return "Ok \(Date())" }
-
     // MARK: Main WebHook Feed
 
     open.post("github-webhook", use: WebHookHandler.handle)
@@ -21,4 +17,8 @@ public func routes(_ open: Router) throws {
 
     let secured = open.grouped(SimpleAuthMiddleware())
     secured.post("link-request", use: LinkRequestHandler.handle)
+}
+
+public func start() throws {
+    try app(.detect()).run()
 }

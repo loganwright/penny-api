@@ -7,7 +7,7 @@ struct ValidationWebHookHandler {
     let worker: Container
     let hook: WebHook
 
-    let validationRepoLogin = GITHUB_VALIDATION_REPO_LOGIN
+    let validationRepoLogin = GITHUB_VALIDATION_REPO_OWNER
     let validationRepoName = GITHUB_VALIDATION_REPO_NAME
 
     func handle() throws -> Future<HTTPStatus> {

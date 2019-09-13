@@ -65,7 +65,7 @@ extension Network {
         let body = ghlr.verificationMessage()
 
         return try postIssue(
-            user: GITHUB_VALIDATION_REPO_LOGIN,
+            user: GITHUB_VALIDATION_REPO_OWNER,
             repo: GITHUB_VALIDATION_REPO_NAME,
             title: title,
             body: body
