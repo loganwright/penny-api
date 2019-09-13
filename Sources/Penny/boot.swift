@@ -1,7 +1,7 @@
 import Routing
 import Vapor
 
-func build() throws -> Application {
+public func build() throws -> Application {
     var config = Config.default()
     var env = try Environment.detect()
     var services = Services.default()
