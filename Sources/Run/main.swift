@@ -1,6 +1,5 @@
 import Penny
 import PennyGitHub
-import Darwin
 import Vapor
 
 public func go() -> Never {
