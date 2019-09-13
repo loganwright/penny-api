@@ -2,7 +2,7 @@ import Vapor
 import Mint
 
 let GITHUB_MICROSERVICE_URL = Environment.get("GITHUB_MICROSERVICE_URL") ?? "http://localhost:9000"
-let GITHUB_MICROSERVICE_KEY = Environment.get("GITHUB_MICROSERVICE_KEY") ?? "tester"
+let GITHUB_MICROSERVICE_TOKEN = Environment.get("GITHUB_MICROSERVICE_TOKEN") ?? "tester"
 
 public struct GitHubLinkRequest: Content {
     public let githubUsername: String
@@ -29,7 +29,7 @@ public struct GitHubLinkResponse: Content {
 struct GitHubConnector {
     let worker: Container
     let headers: HTTPHeaders = HTTPHeaders([
-        ("Authorization", "Bearer \(GITHUB_MICROSERVICE_KEY)"),
+        ("Authorization", "Bearer \(GITHUB_MICROSERVICE_TOKEN)"),
         ("Accept", "application/json"),
         ("Content-Type", "application/json"),
     ])
