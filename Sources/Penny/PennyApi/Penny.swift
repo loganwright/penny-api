@@ -43,9 +43,17 @@ public func pennyapi(_ open: Router) throws {
     }
 
     secure.post("coins") { request -> Future<[CoinResponse]> in
+        struct CoinRequest: Codable {
+             public let source: String
+             public var to: String
+             public var from: String
+             public let reason: String
+             public let value: Int
+        }
+
         let vault = Vault(request)
 
-        let pkgs = try request.content.decode([Coin].self)
+        let pkgs = try request.content.decode([CoinRequest].self)
         let coins = pkgs.flatMap(to: [Coin].self) { pkgs in
             return pkgs.map { pkg in
                 vault.coins.give(to: pkg.to, from: pkg.from, source: pkg.source, reason: pkg.reason, value: pkg.value)
